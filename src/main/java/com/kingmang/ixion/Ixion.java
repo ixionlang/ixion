@@ -214,9 +214,6 @@ public class Ixion {
         String moduleLocation = System.getProperty("user.dir");
 
         try {
-            String stdDir = Path.of(moduleLocation, "std").toString();
-            compileAllJavaFiles(stdDir);
-
             String classPath = api.compile(moduleLocation, entryFileName);
             output.append(executeBytecodeAndGetOutput(classPath));
 

@@ -7,6 +7,16 @@ pub def main(){
         println(i)
     }
 
+    /* in process..
+
+    println("----")
+
+    for i : range(7,10) {
+        println(i)
+    }
+
+    */
+
     println("----")
 
     //while loop
