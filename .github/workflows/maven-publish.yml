@@ -11,4 +11,5 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           java-version: '21'
-      - run: mvn test
+          distribution: 'temurin'
+      - run: mvn clean test
