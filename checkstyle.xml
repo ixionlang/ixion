@@ -4,11 +4,18 @@
         "https://checkstyle.org/dtds/configuration_1_3.dtd">
 <module name="Checker">
     <property name="charset" value="UTF-8"/>
-    <module name="SuppressionFilter">
-        <property name="file" value="${config_loc}/checkstyle-suppressions.xml"/>
+    <module name="FileLength">
+        <property name="max" value="2000"/>
     </module>
 
     <module name="TreeWalker">
+        <module name="EmptyBlock"/>
+        <module name="EmptyStatement"/>
+        <module name="MultipleVariableDeclarations"/>
+        <module name="NeedBraces"/>
+        <module name="SimplifyBooleanExpression"/>
+        <module name="SimplifyBooleanReturn"/>
+
         <module name="AvoidStarImport"/>
         <module name="UnusedImports"/>
         <module name="RedundantImport"/>
