@@ -18,7 +18,7 @@ abstract class IxException protected constructor(
     private val templateString: String,
     private val suggestion: String?
 ) {
-    fun send(ixApi: IxApi?, file: File, node: Node, vararg varargs: String?) {
+    fun send(ixApi: IxApi, file: File, node: Node, vararg varargs: String?) {
         try {
             val pos = node.position!!
             var line = pos.line - 2
@@ -60,19 +60,15 @@ abstract class IxException protected constructor(
                 buffer.append(suggestion)
             }
 
-            if (ixApi != null) {
-                if (ixApi.developmentMode) {
-                    val stackTrace = Thread.currentThread().stackTrace[2]
-                    val sourceLineNumber = stackTrace.lineNumber
-                    val sourceLocation = "${stackTrace.className}:${stackTrace.methodName}"
-                    val logSource = "\nLogged from $sourceLocation@$sourceLineNumber\n"
-                    buffer.append(logSource)
-                }
-            } else {
-                Panic("ixion api is null")
+            if (ixApi.developmentMode) {
+                val stackTrace = Thread.currentThread().stackTrace[2]
+                val sourceLineNumber = stackTrace.lineNumber
+                val sourceLocation = "${stackTrace.className}:${stackTrace.methodName}"
+                val logSource = "\nLogged from $sourceLocation@$sourceLineNumber\n"
+                buffer.append(logSource)
             }
 
-            ixApi?.errorData!!.add(Data(code, buffer.toString(), line, pos.col))
+            ixApi.errorData!!.add(Data(code, buffer.toString(), line, pos.col))
         } catch (e: IOException) {
             e.printStackTrace()
         }

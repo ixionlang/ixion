@@ -1,7 +1,7 @@
 package com.kingmang.ixion.lexer
 
 import com.kingmang.ixion.lexer.TokenType.Companion.find
-import org.apache.commons.lang3.StringEscapeUtils
+import org.apache.commons.text.StringEscapeUtils
 import java.io.File
 import java.io.FileReader
 import java.io.IOException
@@ -16,8 +16,8 @@ import kotlin.code
 class LexerImpl(file: File) : Lexer {
     private val sb = StringBuilder()
     private val reader: PushbackReader = PushbackReader(FileReader(file), 5)
-    var line: Int = 1
-    var col: Int = 1
+    private var line: Int = 1
+    private var col: Int = 1
 
     override fun tokenize(): Token {
         skipWhitespace()
@@ -27,7 +27,7 @@ class LexerImpl(file: File) : Lexer {
         val currentChar = peek()
 
         if (currentChar == '\u0000') {
-            return Token(TokenType.EOF, startLine, startCol, null)
+            return Token(TokenType.EOF, startLine, startCol, "")
         }
 
         if (isAlpha(currentChar)) {
@@ -49,8 +49,10 @@ class LexerImpl(file: File) : Lexer {
         return consumeOperatorToken(startLine, startCol)
     }
 
+    override fun position(): Position =
+        Position(this.line, this.col)
 
-    fun skipWhitespace() {
+    private fun skipWhitespace() {
         while (true) {
             val currentChar = peek()
 
@@ -189,7 +191,7 @@ class LexerImpl(file: File) : Lexer {
             consumeDecimalPart()
         }
 
-        consumeFloatSuffix(type)
+        consumeFloatSuffix()
         consumeExponentPart()
         consumeDoubleSuffix()
 
@@ -214,10 +216,8 @@ class LexerImpl(file: File) : Lexer {
     }
 
 
-    private fun consumeFloatSuffix(type: TokenType?) {
-        var type = type
+    private fun consumeFloatSuffix() {
         if (peek() == 'f') {
-            type = TokenType.FLOAT
             sb.append(advance())
         }
     }

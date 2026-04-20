@@ -59,8 +59,9 @@ data class IxApi(
 
             for (stmt in source.statements) {
                 if (stmt is ExportStatement) {
-                    if (stmt.stmt is PublicAccess) {
-                        val identifier: String? = (stmt.stmt as PublicAccess).identifier()
+                    val stmt = stmt.stmt;
+                    if (stmt is PublicAccess) {
+                        val identifier = stmt.identifier()
                         val type = source.rootContext.getVariable(identifier)
                         if (type != null) {
                             source.exports[identifier] = type
@@ -131,17 +132,17 @@ data class IxApi(
             }
 
             for (p in allByteUnits.second.entries) {
-                val st = p.key
-                val innerCw = p.value
+                val type = p.key
+                val writer = p.value
 
-                val innerName = source.fullRelativePath + "$" + st.name
+                val innerName = source.fullRelativePath + "$" + type.name
 
                 fileName = Path.of(source.projectRoot, IxionConstant.OUT_DIR, "$innerName.class").toString()
                 tmp = File(fileName)
                 tmp.getParentFile().mkdirs()
                 try {
                     output = FileOutputStream(fileName)
-                    output.write(innerCw.toByteArray())
+                    output.write(writer.toByteArray())
                     output.close()
                 } catch (_: IOException) {
                     exit("The above call to mkdirs() should have worked.", 9)
@@ -175,8 +176,9 @@ data class IxApi(
 
             for (stmt in source.statements) {
                 if (stmt is ExportStatement) {
-                    if (stmt.stmt is PublicAccess) {
-                        val identifier: String? = (stmt.stmt as PublicAccess).identifier()
+                    val stmt = stmt.stmt;
+                    if (stmt is PublicAccess) {
+                        val identifier = stmt.identifier()
                         val type = source.rootContext.getVariable(identifier)
                         if (type != null) {
                             source.exports[identifier] = type

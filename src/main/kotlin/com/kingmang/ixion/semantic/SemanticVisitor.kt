@@ -28,23 +28,15 @@ import java.util.stream.Collectors
 /**
  * Visitor for building the symbol table and type environment during compilation
  * Traverses the AST and registers variables, functions, types in appropriate scopes
+ *
+ *
+ * @param ixApi The API instance for error reporting and system interactions
+ * @param rootContext The root context/scope for the compilation unit
+ * @param source The source file being processed
  */
-class SemanticVisitor(ixApi: IxApi?, val rootContext: Context?, val source: IxFile) : Visitor<Optional<IxType>> {
-    val ixApi: IxApi?
-    val file: File
-    var currentContext: Context?
-
-    /**
-     * Constructs a new EnvironmentVisitor
-     * @param ixApi The API instance for error reporting and system interactions
-     * @param rootContext The root context/scope for the compilation unit
-     * @param source The source file being processed
-     */
-    init {
-        this.file = source.file
-        this.currentContext = this.rootContext
-        this.ixApi = ixApi
-    }
+class SemanticVisitor(val ixApi: IxApi, val rootContext: Context?, val source: IxFile) : Visitor<Optional<IxType>> {
+    val file: File = source.file
+    var currentContext: Context? = rootContext
 
     /**
      * Generic visit method that delegates to specific AST node handlers
@@ -61,7 +53,7 @@ class SemanticVisitor(ixApi: IxApi?, val rootContext: Context?, val source: IxFi
      * @return Empty optional as type aliases don't produce values
      */
     override fun visitTypeAlias(statement: TypeAliasStatement): Optional<IxType> {
-        val type: Optional<IxType> = statement.typeStmt.accept(this)!!
+        val type: Optional<IxType> = statement.typeStmt.accept(this)
         currentContext!!.addVariable(statement.identifier.source, type.orElseThrow())
         return Optional.empty()
     }
@@ -161,7 +153,7 @@ class SemanticVisitor(ixApi: IxApi?, val rootContext: Context?, val source: IxFi
      * @return Optional containing the list type
      */
     override fun visitEmptyList(expression: EmptyListExpression): Optional<IxType> {
-        val bt = TypeUtils.getFromString(expression.tokenType.source!!)
+        val bt = TypeUtils.getFromString(expression.tokenType.source)
         val lt = ListType(bt!!)
         expression.realType = lt
         return Optional.of(lt)
@@ -225,7 +217,7 @@ class SemanticVisitor(ixApi: IxApi?, val rootContext: Context?, val source: IxFi
      */
     override fun visitFunctionStmt(statement: DefStatement): Optional<IxType> {
         val name = statement.name.source
-        val generics = statement.generics!!.stream().map { it.source!! }.toList()
+        val generics = statement.generics!!.stream().map { it.source }.toList()
 
         val childEnvironment = statement.body!!.context
         childEnvironment.parent = currentContext
@@ -238,18 +230,18 @@ class SemanticVisitor(ixApi: IxApi?, val rootContext: Context?, val source: IxFi
                 val t = pt.get()
                 if (t is UnknownType && generics.contains(t.typeName)) {
                     val gt = GenericType(t.typeName)
-                    parameters.add(Pair(param.name.source!!, gt))
+                    parameters.add(Pair(param.name.source, gt))
                     childEnvironment.addVariable(param.name.source, gt)
                 } else {
                     childEnvironment.addVariable(param.name.source, t)
-                    parameters.add(Pair(param.name.source!!, t))
+                    parameters.add(Pair(param.name.source, t))
                 }
             } else {
                 exit("pt not present", 783)
             }
         }
 
-        val funcType = DefType(name!!, parameters, generics)
+        val funcType = DefType(name, parameters, generics)
         if (statement.returnType != null) {
             val ttt: Optional<IxType> = statement.returnType.accept(this)
             funcType.returnType = ttt.get()
@@ -319,10 +311,10 @@ class SemanticVisitor(ixApi: IxApi?, val rootContext: Context?, val source: IxFi
 
     /**
      * Visits an index access expression (array/list indexing)
-     * @param expr The index access expression
+     * @param expression The index access expression
      * @return Empty optional (handled in type checking phase)
      */
-    override fun visitIndexAccess(expr: IndexAccessExpression): Optional<IxType> {
+    override fun visitIndexAccess(expression: IndexAccessExpression): Optional<IxType> {
         return Optional.empty()
     }
 
@@ -444,7 +436,7 @@ class SemanticVisitor(ixApi: IxApi?, val rootContext: Context?, val source: IxFi
             } else {
                 UnknownType()
             }
-            parameters.add(Pair(param.name.source!!, resolved))
+            parameters.add(Pair(param.name.source, resolved))
             childEnvironment.addVariable(param.name.source, resolved)
         }
 
@@ -499,9 +491,9 @@ class SemanticVisitor(ixApi: IxApi?, val rootContext: Context?, val source: IxFi
             }
         }
         val name = statement.name.source
-        val generics = statement.generics!!.stream().map { it.source!! }.toList()
+        val generics = statement.generics!!.stream().map { it.source }.toList()
 
-        val structType = StructType(name!!, parameters, generics)
+        val structType = StructType(name, parameters, generics)
         structType.qualifiedName = source.fullRelativePath + "$" + name
         structType.parentName = source.fullRelativePath
         currentContext!!.addVariableOrError(ixApi, name, structType, file, statement)
@@ -518,7 +510,7 @@ class SemanticVisitor(ixApi: IxApi?, val rootContext: Context?, val source: IxFi
     override fun visitTypeAlias(statement: TypeStatement): Optional<IxType> {
         var type: IxType?
         if (statement.next.isEmpty) {
-            val bt = TypeUtils.getFromString(statement.identifier!!.source!!)
+            val bt = TypeUtils.getFromString(statement.identifier!!.source)
             type = Objects.requireNonNullElseGet(bt, Supplier { UnknownType(statement.identifier.source) })
             if (statement.listType) {
                 type = ListType(type!!)
@@ -531,7 +523,7 @@ class SemanticVisitor(ixApi: IxApi?, val rootContext: Context?, val source: IxFi
                 ptr = ptr.get().next
             }
             type = Objects.requireNonNullElse(
-                currentContext!!.getVariableTyped<StructType?>(path.toString(), StructType::class.java as Class<StructType?>),
+                currentContext!!.getVariableTyped<StructType>(path.toString()),
                 UnknownType(path.toString())
             )
         }

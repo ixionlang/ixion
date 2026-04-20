@@ -15,7 +15,7 @@ import org.objectweb.asm.commons.Method
 import java.util.stream.Collectors
 
 class BytecodeGenerator {
-    fun generate(compiler: IxApi?, source: IxFile): Pair<ClassWriter, MutableMap<StructType, ClassWriter>> {
+    fun generate(compiler: IxApi, source: IxFile): Pair<ClassWriter, Map<StructType, ClassWriter>> {
         val cw = ClassWriter(CodegenVisitor.FLAGS)
 
         val qualifiedName = FilenameUtils.removeExtension(source.fullRelativePath)
@@ -60,7 +60,7 @@ class BytecodeGenerator {
 
         cw.visitEnd()
 
-        return Pair(cw, codegenVisitor.structWriters)
+        return Pair(cw, codegenVisitor.getStructWriters())
     }
 
     companion object {

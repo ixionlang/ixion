@@ -16,7 +16,7 @@ class TypeAliasStatement(
         return visitor.visitTypeAlias(this)
     }
 
-    override fun identifier(): String? {
+    override fun identifier(): String {
         return identifier.source
     }
 }

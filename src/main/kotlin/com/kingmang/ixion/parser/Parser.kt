@@ -4,21 +4,19 @@ import com.kingmang.ixion.api.Context
 import com.kingmang.ixion.api.IxApi.Companion.exit
 import com.kingmang.ixion.api.PublicAccess
 import com.kingmang.ixion.ast.*
-import com.kingmang.ixion.lexer.LexerImpl
+import com.kingmang.ixion.lexer.Lexer
 import com.kingmang.ixion.lexer.Position
 import com.kingmang.ixion.lexer.Token
 import com.kingmang.ixion.lexer.TokenType
 import com.kingmang.ixion.parser.infix.*
 import com.kingmang.ixion.parser.prefix.*
-import org.javatuples.Pair
 import java.util.*
-import java.util.List
 
 /**
  * Parser for the Ixion
  * Converts tokens into an abstract syntax tree (AST)
  */
-class Parser(private val tokens: LexerImpl) {
+class Parser(private val lexer: Lexer) {
     val prefixParselets: MutableMap<TokenType?, PrefixParselet?> = HashMap()
     val infixParselets: MutableMap<TokenType?, InfixParselet> = HashMap()
     private val mRead: MutableList<Token> = ArrayList<Token>()
@@ -571,7 +569,7 @@ class Parser(private val tokens: LexerImpl) {
          * Gets the current parsing position
          * @return The current position
          */
-        get() = Position(tokens.line, tokens.col)
+        get() = this.lexer.position()
 
     /**
      * Registers a postfix operator
@@ -621,7 +619,8 @@ class Parser(private val tokens: LexerImpl) {
          */
         get() {
             val parser = infixParselets[lookAhead().type]
-            if (parser != null) return parser.precedence
+            if (parser != null)
+                return parser.precedence
             return 0
         }
 
@@ -632,7 +631,7 @@ class Parser(private val tokens: LexerImpl) {
      */
     fun lookAhead(distance: Int): Token {
         while (mRead.size <= distance)
-            mRead.add(tokens.tokenize()!!)
+            mRead.add(lexer.tokenize() ?: break)
         return mRead[distance]
     }
 
@@ -641,9 +640,8 @@ class Parser(private val tokens: LexerImpl) {
      * @return The next token
      */
     fun lookAhead(): Token {
-        while (mRead.isEmpty()) {
-            mRead.add(tokens.tokenize()!!)
-        }
+        while (mRead.isEmpty())
+            mRead.add(lexer.tokenize() ?: break)
         return mRead.first()
     }
 

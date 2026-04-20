@@ -9,17 +9,17 @@ import java.io.File
 
 class Context {
     private val variables = LinkedMap<String?, IxType?>()
-
     private val mutability: MutableMap<String?, Mutability?> = HashMap()
+
     @JvmField
     var parent: Context? = null
 
-    fun addVariable(name: String?, type: IxType?) {
+    fun addVariable(name: String, type: IxType?) {
         variables[name] = type
         mutability[name] = Mutability.IMMUTABLE
     }
 
-    fun addVariableOrError(ixApi: IxApi?, name: String?, type: IxType?, file: File, node: Node) {
+    fun addVariableOrError(ixApi: IxApi, name: String, type: IxType?, file: File, node: Node) {
         if (getVariable(name) != null) {
             RedeclarationException().send(ixApi, file, node, name)
         } else {
@@ -27,7 +27,7 @@ class Context {
         }
     }
 
-    fun getVariable(name: String?): IxType? {
+    fun getVariable(name: String): IxType? {
         return when {
             variables[name] != null -> variables[name]
             parent != null -> parent!!.getVariable(name)
@@ -35,7 +35,7 @@ class Context {
         }
     }
 
-    fun getVariableMutability(name: String?): Mutability? {
+    fun getVariableMutability(name: String): Mutability? {
         return when {
             mutability[name] != null -> mutability[name]
             parent != null -> parent!!.getVariableMutability(name)
@@ -43,20 +43,20 @@ class Context {
         }
     }
 
-    fun <T> getVariableTyped(name: String?, clazz: Class<T?>): T? {
+    inline fun <reified T> getVariableTyped(name: String): T? {
         val v = getVariable(name)
-        if (clazz.isInstance(v))
+        if (T::class.isInstance(v))
             return v as T
         return null
     }
 
-    fun setVariableMutability(name: String?, m: Mutability?) {
+    fun setVariableMutability(name: String, m: Mutability?) {
         if (mutability[name] != null) {
             mutability[name] = m
         }
     }
 
-    fun setVariableType(name: String?, type: IxType?) {
+    fun setVariableType(name: String, type: IxType?) {
         if (variables[name] != null) {
             variables[name] = type
         }

@@ -15,7 +15,7 @@ class StructStatement(
         return visitor.visitStruct(this)
     }
 
-    override fun identifier(): String? {
+    override fun identifier(): String {
         return name.source
     }
 }

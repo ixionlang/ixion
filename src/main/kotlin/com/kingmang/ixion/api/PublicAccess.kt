@@ -1,5 +1,5 @@
 package com.kingmang.ixion.api
 
 interface PublicAccess {
-    fun identifier(): String?
+    fun identifier(): String
 }

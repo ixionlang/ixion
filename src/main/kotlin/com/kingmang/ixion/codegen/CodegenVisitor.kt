@@ -23,22 +23,17 @@ import com.kingmang.ixion.runtime.DefType.Companion.getSpecializedType
 import com.kingmang.ixion.typechecker.TypeResolver
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.NotImplementedException
-import org.objectweb.asm.ClassWriter
-import org.objectweb.asm.Handle
-import org.objectweb.asm.Label
-import org.objectweb.asm.Opcodes
-import org.objectweb.asm.Type
+import org.objectweb.asm.*
 import org.objectweb.asm.commons.GeneratorAdapter
 import org.objectweb.asm.commons.Method
 import java.io.File
 import java.util.*
 import java.util.function.BiConsumer
-import java.util.stream.Collectors
 
-class CodegenVisitor(val api: IxApi?, val rootContext: Context?, val source: IxFile, cw: ClassWriter) : Visitor<Optional<ClassWriter>> {
-    val file: File
-    val cw: ClassWriter
-    val structWriters: MutableMap<StructType, ClassWriter> = HashMap()
+class CodegenVisitor(val api: IxApi, val rootContext: Context?, val source: IxFile, cw: ClassWriter) : Visitor<Optional<ClassWriter>> {
+    private val file: File
+    private val cw: ClassWriter
+    private val structWriters: MutableMap<StructType, ClassWriter> = HashMap()
     private val functionStack = Stack<DefType>()
     private var lambdaCounter = 0
 
@@ -48,6 +43,10 @@ class CodegenVisitor(val api: IxApi?, val rootContext: Context?, val source: IxF
         this.currentContext = this.rootContext
         this.cw = cw
         this.file = source.file
+    }
+
+    fun getStructWriters(): Map<StructType, ClassWriter> {
+        return this.structWriters
     }
 
     override fun visit(statement: Statement): Optional<ClassWriter> {
@@ -524,7 +523,7 @@ class CodegenVisitor(val api: IxApi?, val rootContext: Context?, val source: IxF
      * @return Пустой Optional
      */
     override fun visitFunctionStmt(statement: DefStatement): Optional<ClassWriter> {
-        val funcType = currentContext!!.getVariableTyped<DefType?>(statement.name.source, DefType::class.java as Class<DefType?>)
+        val funcType = currentContext!!.getVariableTyped<DefType>(statement.name.source)
         functionStack.add(funcType)
         val childEnvironment = statement.body!!.context
         var name = "_" + funcType!!.name
@@ -670,7 +669,7 @@ class CodegenVisitor(val api: IxApi?, val rootContext: Context?, val source: IxF
     override fun visitLiteralExpr(expression: LiteralExpression): Optional<ClassWriter> {
         if (expression.realType is BuiltInType) {
             val transformed =
-                TypeResolver.getValueFromString(expression.literal.source!!, getFromToken(expression.literal.type)!!)
+                TypeResolver.getValueFromString(expression.literal.source, getFromToken(expression.literal.type)!!)
             val ga = functionStack.peek().ga
             when (expression.realType) {
                 BuiltInType.INT -> ga!!.push(transformed as Int)
@@ -846,18 +845,18 @@ class CodegenVisitor(val api: IxApi?, val rootContext: Context?, val source: IxF
 
     /**
      * Генерирует байт-код для префиксных операций. В настоящее время поддерживает только унарный минус для числовых типов.
-     * @param expr Префиксное выражение
+     * @param expression Префиксное выражение
      * @return Пустой Optional
      */
-    override fun visitPrefix(expr: PrefixExpression): Optional<ClassWriter> {
+    override fun visitPrefix(expression: PrefixExpression): Optional<ClassWriter> {
         val ga = functionStack.peek().ga
 
-        expr.right.accept(this)
+        expression.right.accept(this)
 
-        val t = expr.right.realType
-        if (expr.operator.type == TokenType.SUB && t is BuiltInType) {
+        val t = expression.right.realType
+        if (expression.operator.type == TokenType.SUB && t is BuiltInType) {
             ga!!.visitInsn(t.negOpcode)
-            expr.realType = t
+            expression.realType = t
         }
 
         return Optional.empty()
@@ -1012,7 +1011,7 @@ class CodegenVisitor(val api: IxApi?, val rootContext: Context?, val source: IxF
      */
     override fun visitStruct(statement: StructStatement): Optional<ClassWriter> {
         val innerCw = ClassWriter(FLAGS)
-        val structType = currentContext!!.getVariableTyped<StructType?>(statement.name.source, StructType::class.java as Class<StructType?>)
+        val structType = currentContext!!.getVariableTyped<StructType>(statement.name.source)
 
         val name = structType!!.name
         val innerName = source.fullRelativePath + "$" + name
@@ -1058,7 +1057,7 @@ class CodegenVisitor(val api: IxApi?, val rootContext: Context?, val source: IxF
 
         BytecodeGenerator.addToString(innerCw, structType, constructorDescriptor.toString(), ownerInternalName)
 
-        structWriters[structType] = innerCw
+        this.structWriters[structType] = innerCw
 
         return Optional.of(innerCw)
     }

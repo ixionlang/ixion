@@ -33,10 +33,10 @@ import kotlin.Pair
  * Visitor for type checking and validation of AST nodes
  * Ensures type safety and resolves type information throughout the program
  */
-class TypeCheckVisitor(val ixApi: IxApi?, val rootContext: Context?, ixFile: IxFile) : Visitor<Optional<IxType>> {
-    val file: File = ixFile.file
+class TypeCheckVisitor(private val ixApi: IxApi, private val rootContext: Context, ixFile: IxFile) : Visitor<Optional<IxType>> {
+    private val file: File = ixFile.file
     private val functionStack = Stack<DefType>()
-    var currentContext: Context?
+    private var currentContext: Context
 
     /**
      * @param ixApi The API instance for error reporting
@@ -56,13 +56,13 @@ class TypeCheckVisitor(val ixApi: IxApi?, val rootContext: Context?, ixFile: IxF
      * @return Empty optional as type aliases don't produce values
      */
     override fun visitTypeAlias(statement: TypeAliasStatement): Optional<IxType> {
-        val a = currentContext!!.getVariable(statement.identifier.source)
+        val a = currentContext.getVariable(statement.identifier.source)
 
         val resolvedTypes = HashSet<IxType?>()
         if (a is UnionType) {
             extractedMethodForUnions(resolvedTypes, a, statement)
 
-            currentContext!!.setVariableType(statement.identifier(), a)
+            currentContext.setVariableType(statement.identifier(), a)
         }
 
         return Optional.empty()
@@ -299,12 +299,12 @@ class TypeCheckVisitor(val ixApi: IxApi?, val rootContext: Context?, ixFile: IxF
             when (b.get()) {
                 is ExternalType -> {
                     if ((b.get() as ExternalType).foundClass!!.getName() == "java.util.Iterator") {
-                        currentContext!!.setVariableType(statement.name.source, BuiltInType.INT)
+                        currentContext.setVariableType(statement.name.source, BuiltInType.INT)
                     }
                 }
 
                 is ListType-> {
-                    currentContext!!.setVariableType(statement.name.source, (b.get() as ListType).contentType)
+                    currentContext.setVariableType(statement.name.source, (b.get() as ListType).contentType)
                 }
 
                 else -> NotIterableException().send(ixApi, file, statement.expression, b.get().name)
@@ -313,8 +313,7 @@ class TypeCheckVisitor(val ixApi: IxApi?, val rootContext: Context?, ixFile: IxF
 
         statement.block.accept(this)
 
-        currentContext = currentContext!!.parent
-
+        this.popContext()
         return Optional.empty()
     }
 
@@ -323,7 +322,7 @@ class TypeCheckVisitor(val ixApi: IxApi?, val rootContext: Context?, ixFile: IxF
      * @return Empty optional as function definitions don't produce values
      */
     override fun visitFunctionStmt(statement: DefStatement): Optional<IxType> {
-        val funcType = currentContext!!.getVariableTyped<DefType?>(statement.name.source, DefType::class.java as Class<DefType?>)
+        val funcType = currentContext.getVariableTyped<DefType>(statement.name.source)
         if (funcType != null) {
             functionStack.add(funcType)
             val childEnvironment = statement.body!!.context
@@ -334,7 +333,7 @@ class TypeCheckVisitor(val ixApi: IxApi?, val rootContext: Context?, ixFile: IxF
             for (param in parametersBefore) {
                 when (param.second) {
                     is UnknownType -> {
-                        val attempt = currentContext!!.getVariable((param.second as UnknownType).typeName)
+                        val attempt = currentContext.getVariable((param.second as UnknownType).typeName)
                         if (attempt != null) {
                             childEnvironment.setVariableType(param.first, attempt)
                             val nt = Pair(param.first, attempt)
@@ -350,7 +349,7 @@ class TypeCheckVisitor(val ixApi: IxApi?, val rootContext: Context?, ixFile: IxF
                         val resolvedTypes = HashSet<IxType?>()
                         extractedMethodForUnions(resolvedTypes, param.second as UnionType, statement)
 
-                        currentContext!!.setVariableType(param.first, param.second)
+                        currentContext.setVariableType(param.first, param.second)
                     }
 
                     else -> {
@@ -362,7 +361,7 @@ class TypeCheckVisitor(val ixApi: IxApi?, val rootContext: Context?, ixFile: IxF
             funcType.parameters.addAll(parametersAfter)
 
             if (funcType.returnType is UnknownType) {
-                val attempt = currentContext!!.getVariable((funcType.returnType as UnknownType).typeName)
+                val attempt = currentContext.getVariable((funcType.returnType as UnknownType).typeName)
                 if (attempt != null) {
                     funcType.returnType = attempt
                 } else {
@@ -382,8 +381,8 @@ class TypeCheckVisitor(val ixApi: IxApi?, val rootContext: Context?, ixFile: IxF
                 statement.body.statements.add(returnStmt)
             }
 
-            currentContext = currentContext!!.parent
-            functionStack.pop()
+            this.popContext()
+            this.functionStack.pop()
         }
         return Optional.empty()
     }
@@ -401,10 +400,10 @@ class TypeCheckVisitor(val ixApi: IxApi?, val rootContext: Context?, ixFile: IxF
      * @return Optional containing the type of the identifier
      */
     override fun visitIdentifierExpr(expression: IdentifierExpression): Optional<IxType> {
-        var t = currentContext!!.getVariable(expression.identifier.source)
+        var t = currentContext.getVariable(expression.identifier.source)
         if (t != null) {
             if (t is UnknownType) {
-                val attempt = currentContext!!.getVariable(t.typeName)
+                val attempt = currentContext.getVariable(t.typeName)
                 if (attempt != null) {
                     t = attempt
                 }
@@ -426,7 +425,7 @@ class TypeCheckVisitor(val ixApi: IxApi?, val rootContext: Context?, ixFile: IxF
         statement.trueBlock.accept(this)
         statement.falseStatement?.accept(this)
 
-        currentContext = currentContext!!.parent
+        this.popContext()
         return Optional.empty()
     }
 
@@ -483,7 +482,7 @@ class TypeCheckVisitor(val ixApi: IxApi?, val rootContext: Context?, ixFile: IxF
                 val block: BlockStatement = pair.second
                 var caseType = statement.types[keyTypeStmt]
                 if (caseType is UnknownType) {
-                    val attempt = currentContext!!.getVariable(caseType.typeName)
+                    val attempt = currentContext.getVariable(caseType.typeName)
                     if (attempt != null) {
                         caseType = attempt
                     }
@@ -497,7 +496,7 @@ class TypeCheckVisitor(val ixApi: IxApi?, val rootContext: Context?, ixFile: IxF
 
                 currentContext = childEnvironment
                 block.accept(this)
-                currentContext = currentContext!!.parent
+                this.popContext()
             })
             if (!typesToCover.isEmpty()) {
                 MatchCoverageException().send(ixApi, file, statement, String.valueOf((statement.expression.realType as UnionType)))
@@ -589,7 +588,7 @@ class TypeCheckVisitor(val ixApi: IxApi?, val rootContext: Context?, ixFile: IxF
                 UnknownType()
             }
             val resolvedType = if (rawType is UnknownType) {
-                currentContext!!.getVariable(rawType.typeName) ?: rawType
+                currentContext.getVariable(rawType.typeName) ?: rawType
             } else {
                 rawType
             }
@@ -599,7 +598,7 @@ class TypeCheckVisitor(val ixApi: IxApi?, val rootContext: Context?, ixFile: IxF
 
         var returnType = expression.returnType.accept(this).orElseGet { UnknownType() }
         if (returnType is UnknownType) {
-            val attempt = currentContext!!.getVariable(returnType.typeName)
+            val attempt = currentContext.getVariable(returnType.typeName)
             if (attempt != null) {
                 returnType = attempt
             } else {
@@ -616,7 +615,7 @@ class TypeCheckVisitor(val ixApi: IxApi?, val rootContext: Context?, ixFile: IxF
 
         currentContext = childEnvironment
         expression.body.accept(this)
-        currentContext = currentContext!!.parent
+        this.popContext()
 
         if (!lambdaFunction.hasReturn2) {
             val returnStmt = ReturnStatement(
@@ -684,7 +683,7 @@ class TypeCheckVisitor(val ixApi: IxApi?, val rootContext: Context?, ixFile: IxF
      * @return Empty optional as struct definitions don't produce values
      */
     override fun visitStruct(statement: StructStatement): Optional<IxType> {
-        val structType = currentContext!!.getVariableTyped<StructType?>(statement.name.source, StructType::class.java as Class<StructType?>)
+        val structType = currentContext.getVariableTyped<StructType>(statement.name.source)
         if (structType != null) {
             val parametersAfter = ArrayList<Pair<kotlin.String, IxType>>()
             zip(
@@ -693,7 +692,7 @@ class TypeCheckVisitor(val ixApi: IxApi?, val rootContext: Context?, ixFile: IxF
                 BiConsumer { a: ParameterStatement?, b: Pair<kotlin.String, IxType>? ->
                     val bType = b!!.second
                     if (bType is UnknownType) {
-                        val attempt = currentContext!!.getVariable(bType.typeName)
+                        val attempt = currentContext.getVariable(bType.typeName)
                         if (attempt != null) {
                             parametersAfter.add(Pair(b.first, attempt))
                         } else if (structType.generics.contains(bType.typeName)) {
@@ -729,7 +728,7 @@ class TypeCheckVisitor(val ixApi: IxApi?, val rootContext: Context?, ixFile: IxF
                 ptr = ptr.get().next
             }
             type = Objects.requireNonNullElse(
-                currentContext!!.getVariableTyped<StructType?>(path.toString(), StructType::class.java as Class<StructType?>),
+                currentContext.getVariableTyped<StructType>(path.toString()),
                 UnknownType(path.toString())
             )
         }
@@ -754,7 +753,7 @@ class TypeCheckVisitor(val ixApi: IxApi?, val rootContext: Context?, ixFile: IxF
         val t: Optional<IxType> = expr.accept(this)
 
         if (t.isPresent) {
-            currentContext!!.setVariableType(statement.name.source, t.get())
+            currentContext.setVariableType(statement.name.source, t.get())
         } else {
             TypeNotResolvedException().send(ixApi, file, expr, statement.name.source)
         }
@@ -774,7 +773,7 @@ class TypeCheckVisitor(val ixApi: IxApi?, val rootContext: Context?, ixFile: IxF
 
         statement.block.accept(this)
 
-        currentContext = currentContext!!.parent
+        this.popContext()
         return Optional.empty()
     }
 
@@ -787,7 +786,7 @@ class TypeCheckVisitor(val ixApi: IxApi?, val rootContext: Context?, ixFile: IxF
     private fun extractedMethodForUnions(resolvedTypes: HashSet<IxType?>, ut: UnionType, node: Statement) {
         for (type in ut.types) {
             if (type is UnknownType) {
-                val attempt = currentContext!!.getVariable(type.typeName)
+                val attempt = currentContext.getVariable(type.typeName)
                 if (attempt != null) {
                     resolvedTypes.add(attempt)
                 } else {
@@ -869,7 +868,7 @@ class TypeCheckVisitor(val ixApi: IxApi?, val rootContext: Context?, ixFile: IxF
             expr.arguments,
             BiConsumer { param: Pair<kotlin.String, IxType>, arg: Expression? ->
                 if (param.second is UnknownType) {
-                    val attempt = currentContext!!.getVariable((param.second as UnknownType).typeName)
+                    val attempt = currentContext.getVariable((param.second as UnknownType).typeName)
                     if (attempt != null) {
                         parametersAfter.add(Pair(param.first, attempt))
                     } else {
@@ -897,5 +896,9 @@ class TypeCheckVisitor(val ixApi: IxApi?, val rootContext: Context?, ixFile: IxF
                 IxFunction4::class.java
             }
         }
+    }
+
+    private fun popContext() {
+        this.currentContext = this.currentContext.parent!!
     }
 }

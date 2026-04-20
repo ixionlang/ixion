@@ -11,7 +11,7 @@ import com.kingmang.ixion.runtime.*
 import java.util.*
 import kotlin.math.max
 
-class JavaCodegenVisitor(private val ixApi: IxApi?, private val source: IxFile) : Visitor<Optional<String>> {
+class JavaCodegenVisitor(private val ixApi: IxApi, private val source: IxFile) : Visitor<Optional<String>> {
     private var currentContext: Context?
     private val output = StringBuilder()
     private var indentLevel = 0
@@ -175,7 +175,7 @@ class JavaCodegenVisitor(private val ixApi: IxApi?, private val source: IxFile) 
     override fun visitLiteralExpr(expression: LiteralExpression): Optional<String> {
         if (expression.realType is BuiltInType) {
             when (expression.realType) {
-                BuiltInType.STRING -> print("\"" + expression.literal.source!!.replace("\"", "\\\"") + "\"")
+                BuiltInType.STRING -> print("\"" + expression.literal.source.replace("\"", "\\\"") + "\"")
                 BuiltInType.CHAR -> {
                     val escapedChar: String = getEscapedChar(expression)
                     print("'$escapedChar'")
@@ -190,7 +190,7 @@ class JavaCodegenVisitor(private val ixApi: IxApi?, private val source: IxFile) 
                     print("'$escapedChar'")
                 }
 
-                TokenType.STRING -> print("\"" + expression.literal.source!!.replace("\"", "\\\"") + "\"")
+                TokenType.STRING -> print("\"" + expression.literal.source.replace("\"", "\\\"") + "\"")
                 else -> print(expression.literal.source)
             }
         }
@@ -338,7 +338,7 @@ class JavaCodegenVisitor(private val ixApi: IxApi?, private val source: IxFile) 
     }
 
     override fun visitFunctionStmt(statement: DefStatement): Optional<String> {
-        val funcType = currentContext!!.getVariableTyped<DefType?>(statement.name.source, DefType::class.java as Class<DefType?>)
+        val funcType = currentContext!!.getVariableTyped<DefType>(statement.name.source)
         functionStack.push(funcType)
         localMaps[funcType] = HashMap<String?, Int?>()
 
@@ -536,7 +536,7 @@ class JavaCodegenVisitor(private val ixApi: IxApi?, private val source: IxFile) 
     }
 
     override fun visitStruct(statement: StructStatement): Optional<String> {
-        val structType = currentContext!!.getVariableTyped<StructType?>(statement.name.source, StructType::class.java as Class<StructType?>)
+        val structType = currentContext!!.getVariableTyped<StructType>(statement.name.source)
 
         println("public static class " + structType!!.name + " {")
 
@@ -669,10 +669,9 @@ class JavaCodegenVisitor(private val ixApi: IxApi?, private val source: IxFile) 
         }
     }
 
-
     companion object {
         private fun getEscapedChar(expr: LiteralExpression): String {
-            return when (val charValue: Char = expr.literal.source!!.first()) {
+            return when (val charValue: Char = expr.literal.source.first()) {
                 '\n' -> "\\n"
                 '\t' -> "\\t"
                 '\r' -> "\\r"
