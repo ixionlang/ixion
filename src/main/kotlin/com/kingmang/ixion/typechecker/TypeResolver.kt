@@ -31,7 +31,6 @@ object TypeResolver {
         when {
             par is UnionType && arg is UnionType -> return par.types.containsAll(arg.types) && arg.types.containsAll(par.types)
             par is UnionType && par.types.contains(arg) -> return true
-            arg is UnionType && arg.types.contains(par) -> return true
         }
 
         // any
