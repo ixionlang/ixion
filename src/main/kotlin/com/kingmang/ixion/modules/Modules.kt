@@ -54,8 +54,8 @@ object Modules {
 
     private fun mapJavaType(type: Class<*>): IxType {
         return when (type) {
-            java.lang.Integer.TYPE,
-            java.lang.Integer::class.java -> BuiltInType.INT
+            Integer.TYPE,
+            Integer::class.java -> BuiltInType.INT
 
             java.lang.Float.TYPE,
             java.lang.Float::class.java -> BuiltInType.FLOAT
@@ -66,13 +66,13 @@ object Modules {
             java.lang.Boolean.TYPE,
             java.lang.Boolean::class.java -> BuiltInType.BOOLEAN
 
-            java.lang.Character.TYPE,
-            java.lang.Character::class.java -> BuiltInType.CHAR
+            Character.TYPE,
+            Character::class.java -> BuiltInType.CHAR
 
             java.lang.String::class.java -> BuiltInType.STRING
 
-            java.lang.Void.TYPE,
-            java.lang.Void::class.java -> BuiltInType.VOID
+            Void.TYPE,
+            Void::class.java -> BuiltInType.VOID
 
             else -> ExternalType(type)
         }

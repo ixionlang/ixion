@@ -11,7 +11,7 @@ import javax.annotation.Nonnull
 class CollectionUtil private constructor() {
     companion object {
         @JvmStatic
-        fun <A, B, O> zipMap(a: List<out A>, b: List<out B>, lambda: BiFunction<A, B, out O>): Stream<O> {
+        fun <A, B, O> zipMap(a: List<A>, b: List<B>, lambda: BiFunction<A, B, out O>): Stream<O> {
             val l = ArrayList<O>()
             if (a.size == b.size) {
                 val i1 = a.iterator()
@@ -65,9 +65,15 @@ class CollectionUtil private constructor() {
 
         @JvmStatic
         fun convert(c: Class<*>): Class<*>? = when (c) {
-            Integer::class.java -> Int::class.javaPrimitiveType
-            Float::class.java -> Float::class.javaPrimitiveType
-            Boolean::class.java -> Boolean::class.javaPrimitiveType
+            java.lang.Integer::class.java, Int::class.javaPrimitiveType -> Int::class.javaPrimitiveType
+            java.lang.Float::class.java, Float::class.javaPrimitiveType -> Float::class.javaPrimitiveType
+            java.lang.Double::class.java, Double::class.javaPrimitiveType -> Double::class.javaPrimitiveType
+            java.lang.Boolean::class.java, Boolean::class.javaPrimitiveType -> Boolean::class.javaPrimitiveType
+            java.lang.Character::class.java, Char::class.javaPrimitiveType -> Char::class.javaPrimitiveType
+            java.lang.Long::class.java, Long::class.javaPrimitiveType -> Long::class.javaPrimitiveType
+            java.lang.Short::class.java, Short::class.javaPrimitiveType -> Short::class.javaPrimitiveType
+            java.lang.Byte::class.java, Byte::class.javaPrimitiveType -> Byte::class.javaPrimitiveType
+            java.lang.Void::class.java, Void.TYPE -> Void.TYPE
             else -> null
         }
 

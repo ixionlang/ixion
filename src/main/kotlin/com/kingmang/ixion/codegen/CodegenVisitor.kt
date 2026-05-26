@@ -732,8 +732,7 @@ class CodegenVisitor(val api: IxApi, val rootContext: Context?, val source: IxFi
 
         statement.expression.accept(this)
         val localExprIndex = ga!!.newLocal(ObjectType)
-        val s = "bruh"
-        funcType.localMap[s] = localExprIndex
+        funcType.localMap[""] = localExprIndex
         ga.storeLocal(localExprIndex)
 
         for (typeStmt in statement.cases.keys) {
@@ -767,7 +766,20 @@ class CodegenVisitor(val api: IxApi, val rootContext: Context?, val source: IxFi
             } else {
                 val typeClass: Type? =
                     when (t) {
-                        is BuiltInType -> Type.getType(t.typeClass)
+                        is BuiltInType -> {
+                            // TODO: вынести в отдельный метод
+                            val boxedClass = when (t) {
+                                BuiltInType.INT -> java.lang.Integer::class.java
+                                BuiltInType.FLOAT -> java.lang.Float::class.java
+                                BuiltInType.DOUBLE -> java.lang.Double::class.java
+                                BuiltInType.BOOLEAN -> java.lang.Boolean::class.java
+                                BuiltInType.CHAR -> java.lang.Character::class.java
+                                BuiltInType.STRING -> String::class.java
+                                BuiltInType.ANY -> Any::class.java
+                                BuiltInType.VOID -> Void::class.java
+                            }
+                            Type.getType(boxedClass)
+                        }
                         is StructType -> Type.getType("L" + t.qualifiedName + ";")
                         else -> Type.getType(t!!.descriptor)
                     }
@@ -779,8 +791,7 @@ class CodegenVisitor(val api: IxApi, val rootContext: Context?, val source: IxFi
 
             if (t is BuiltInType && t.isNumeric) {
                 t.unboxNoCheck(ga)
-
-                val localPrimitiveType = ga.newLocal(Type.getType(CollectionUtil.convert(t.typeClass!!)))
+                val localPrimitiveType = ga.newLocal(Type.getType(t.descriptor))
                 ga.storeLocal(localPrimitiveType)
                 funcType.localMap[scopedName] = localPrimitiveType
             } else {

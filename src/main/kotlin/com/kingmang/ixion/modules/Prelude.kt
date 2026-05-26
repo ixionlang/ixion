@@ -2,6 +2,7 @@ package com.kingmang.ixion.modules
 
 import com.kingmang.ixion.exception.Panic
 import com.kingmang.ixion.runtime.CollectionUtil.IxListWrapper
+import com.kingmang.ixion.runtime.ixfunction.IxFunction1
 import java.util.*
 import java.util.stream.IntStream
 
@@ -54,8 +55,8 @@ object Prelude {
     fun len(r: Any?): Int {
         return when (r) {
             is IxListWrapper -> r.list.size + 1
-            is String        -> r.length
-            else             -> -1
+            is String -> r.length
+            else -> -1
         }
     }
 }
