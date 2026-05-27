@@ -734,6 +734,7 @@ class CodegenVisitor(val api: IxApi, val rootContext: Context?, val source: IxFi
         val localExprIndex = ga!!.newLocal(ObjectType)
         funcType.localMap[""] = localExprIndex
         ga.storeLocal(localExprIndex)
+        val endAll = Label()
 
         for (typeStmt in statement.cases.keys) {
             val pair = statement.cases[typeStmt]
@@ -747,12 +748,12 @@ class CodegenVisitor(val api: IxApi, val rootContext: Context?, val source: IxFi
                 }
             }
 
-            val end = Label()
+            val nextCase = Label()
             ga.loadLocal(localExprIndex)
 
             if (t is ListType) {
                 ga.instanceOf(ListWrapperType)
-                ga.visitJumpInsn(Opcodes.IFEQ, end)
+                ga.visitJumpInsn(Opcodes.IFEQ, nextCase)
                 ga.loadLocal(localExprIndex)
                 ga.checkCast(ListWrapperType)
                 ga.storeLocal(localExprIndex)
@@ -761,7 +762,7 @@ class CodegenVisitor(val api: IxApi, val rootContext: Context?, val source: IxFi
                 funcType.ga!!.invokeVirtual(ListWrapperType, Method("name", "()Ljava/lang/String;"))
                 ga.push(t.contentType.name)
                 funcType.ga!!.invokeVirtual(Type.getType(String::class.java), Method("equals", "(Ljava/lang/Object;)Z"))
-                ga.visitJumpInsn(Opcodes.IFEQ, end)
+                ga.visitJumpInsn(Opcodes.IFEQ, nextCase)
                 ga.loadLocal(localExprIndex)
             } else {
                 val typeClass: Type? =
@@ -784,7 +785,7 @@ class CodegenVisitor(val api: IxApi, val rootContext: Context?, val source: IxFi
                         else -> Type.getType(t!!.descriptor)
                     }
                 ga.instanceOf(typeClass)
-                ga.visitJumpInsn(Opcodes.IFEQ, end)
+                ga.visitJumpInsn(Opcodes.IFEQ, nextCase)
                 ga.loadLocal(localExprIndex)
                 ga.checkCast(typeClass)
             }
@@ -804,8 +805,12 @@ class CodegenVisitor(val api: IxApi, val rootContext: Context?, val source: IxFi
             block.accept(this)
             currentContext = currentContext!!.parent
 
-            ga.mark(end)
+            ga.goTo(endAll)
+            ga.mark(nextCase)
         }
+
+        ga.throwException(Type.getType(IllegalStateException::class.java), "Non-exhaustive match at runtime")
+        ga.mark(endAll)
 
         return Optional.empty()
     }

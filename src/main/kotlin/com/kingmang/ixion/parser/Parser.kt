@@ -318,6 +318,12 @@ class Parser(private val lexer: Lexer) {
                 thenHasReturn && elseHasReturn
             }
 
+            is CaseStatement -> {
+                stmt.cases.isNotEmpty() && stmt.cases.values.all { (_, body) ->
+                    hasReturnStatement(body)
+                }
+            }
+
             else -> false
         }
     }
@@ -377,7 +383,7 @@ class Parser(private val lexer: Lexer) {
             if (check(TokenType.LBRACE)) {
                 caseBody = parseBlock()
             } else {
-                val stmt = ExpressionStatement(this.pos, expression())
+                val stmt = statement()
                 caseBody = BlockStatement(this.pos, mutableListOf(stmt), Context())
             }
             cases[type] = kotlin.Pair(s.source!!, caseBody)

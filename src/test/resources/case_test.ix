@@ -1,0 +1,15 @@
+use <std>
+
+type number = int | float
+
+
+def print_type(num : number): int {
+    case num {
+        int i => return 20
+        float f => return 30
+    }
+}
+
+pub def main(){
+    std::print(print_type(10.0))
+}

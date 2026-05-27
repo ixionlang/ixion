@@ -53,6 +53,13 @@ class ExamplesTest {
     }
 
     @Test
+    fun case() {
+        ixAssert("case_test.ix", """
+            30
+        """)
+    }
+
+    @Test
     fun lambda() {
         ixAssert("lambda.ix", """
             42
