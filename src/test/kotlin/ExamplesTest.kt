@@ -45,6 +45,14 @@ class ExamplesTest {
     }
 
     @Test
+    fun adt() {
+        ixAssert("adt.ix", """
+            value 10 is integer
+            value 10.0 is float
+        """)
+    }
+
+    @Test
     fun lambda() {
         ixAssert("lambda.ix", """
             42
