@@ -10,6 +10,7 @@ import com.kingmang.ixion.exception.IxException
 import com.kingmang.ixion.exception.IxException.CompilerError
 import com.kingmang.ixion.exception.ModuleNotFoundException
 import com.kingmang.ixion.modules.Modules
+import com.kingmang.ixion.optimizer.ConstantFoldingVisitor
 import com.kingmang.ixion.runtime.DefType
 import com.kingmang.ixion.runtime.IxionExitException
 import com.kingmang.ixion.typechecker.TypeCheckVisitor
@@ -45,7 +46,7 @@ data class IxApi(
      * @throws IxException.CompilerError If compilation errors occur
      */
     @Throws(FileNotFoundException::class, CompilerError::class)
-    fun compile(projectRoot: String, filename: String?): String {
+    fun compile(projectRoot: String, filename: String?, optimize: Boolean = false): String {
         val relativePath = FilenameUtils.getPath(filename)
         val name = FilenameUtils.getName(filename)
 
@@ -95,6 +96,12 @@ data class IxApi(
             source.acceptVisitor(typeCheckVisitor)
 
             IxException.killIfErrors(this, "Correct type errors before compilation can continue.")
+        }
+        if (optimize) {
+            val optimizer = ConstantFoldingVisitor()
+            for (source in compilationSet.values) {
+                optimizer.optimize(source)
+            }
         }
         output(compilationSet)
 
@@ -162,7 +169,7 @@ data class IxApi(
      * @throws IxException.CompilerError If compilation errors occur
      */
     @Throws(FileNotFoundException::class, CompilerError::class)
-    fun compileToJava(projectRoot: String, filename: String?): String {
+    fun compileToJava(projectRoot: String, filename: String?, optimize: Boolean = false): String {
         val relativePath = FilenameUtils.getPath(filename)
         val name = FilenameUtils.getName(filename)
 
@@ -210,6 +217,12 @@ data class IxApi(
             val typeCheckVisitor = TypeCheckVisitor(this, source.rootContext, source)
             source.acceptVisitor(typeCheckVisitor)
             IxException.killIfErrors(this, "Correct type errors before compilation can continue.")
+        }
+        if (optimize) {
+            val optimizer = ConstantFoldingVisitor()
+            for (source in compilationSet.values) {
+                optimizer.optimize(source)
+            }
         }
 
         outputJava(compilationSet)

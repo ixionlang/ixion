@@ -18,6 +18,7 @@ class Ixion {
     private var entry: String? = null
     private var helpRequested = false
     private var compileOnly = false
+    private var optimize = false
     private var target = CompilationTarget.JVM_BYTECODE
 
     private fun parseArguments(args: Array<String>) {
@@ -26,6 +27,7 @@ class Ixion {
                 "-h", "--help" -> helpRequested = true
                 "--java" -> target = CompilationTarget.JAVA_SOURCE
                 "--compile-only" -> compileOnly = true
+                "--optimize" -> optimize = true
                 else -> if (entry == null && !arg.startsWith("-")) {
                     entry = arg
                 }
@@ -40,6 +42,7 @@ class Ixion {
         println("  -h, --help        Display this help message")
         println("  --java            Generate Java source code instead of bytecode")
         println("  --compile-only    Only compile, do not run\n")
+        println("  --optimize        Enable optimizer passes (constant folding)\n")
     }
 
     @Throws(IOException::class, InterruptedException::class)
@@ -163,7 +166,7 @@ class Ixion {
             var basePath: String?
 
             if (target == CompilationTarget.JAVA_SOURCE) {
-                classPath = api.compileToJava(moduleLocation, entry)
+                classPath = api.compileToJava(moduleLocation, entry, optimize)
                 basePath = classPath.replace(".", "/")
 
                 if (!compileOnly) {
@@ -174,7 +177,7 @@ class Ixion {
                     )
                 }
             } else {
-                classPath = api.compile(moduleLocation, entry)
+                classPath = api.compile(moduleLocation, entry, optimize)
 
                 if (!compileOnly) {
                     executeBytecode(classPath)
@@ -209,7 +212,7 @@ class Ixion {
         val moduleLocation = System.getProperty("user.dir")
 
         try {
-            val classPath = api.compile(moduleLocation, entryFileName)
+            val classPath = api.compile(moduleLocation, entryFileName, optimize)
             output.append(executeBytecodeAndGetOutput(classPath))
         } catch (e: Exception) {
             output.append("Error: ").append(e.message)
