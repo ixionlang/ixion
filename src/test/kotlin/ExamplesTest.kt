@@ -2,6 +2,7 @@ import com.kingmang.ixion.Ixion
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 
 class ExamplesTest {
 
@@ -75,6 +76,21 @@ class ExamplesTest {
         """)
     }
 
+    @Test
+    fun specification_use_requires_angle_brackets() {
+        ixAssertError("specification_use_invalid.ix", "Expected '<' at the start of using path")
+    }
+
+    @Test
+    fun specification_pub_only_wraps_exportable_statements() {
+        ixAssertError("specification_pub_invalid.ix", "Can only export struct, type alias, variable, enum or function.")
+    }
+
+    @Test
+    fun specification_case_requires_binding_name() {
+        ixAssertError("specification_case_invalid.ix", "Expected name for reified value before `=>` in case statement.")
+    }
+
     private fun ixAssert(runPath: String, expected: String) {
         val ixion = Ixion()
         assertDoesNotThrow {
@@ -85,6 +101,13 @@ class ExamplesTest {
                 "Строки не совпадают после нормализации"
             )
         }
+    }
+
+    private fun ixAssertError(runPath: String, expectedMessage: String) {
+        val ixion = Ixion()
+        val actual = ixion.getCompiledProgramOutput("/src/test/resources/$runPath")
+        assertTrue(actual.startsWith("Error: "), "Expected compilation to fail, got: $actual")
+        assertTrue(actual.contains(expectedMessage), "Expected error message to contain: $expectedMessage, got: $actual")
     }
 
     private fun normalizeString(str: String?): String {

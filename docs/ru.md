@@ -14,6 +14,7 @@
 * [HTTP модуль](#HTTP-модуль)
 * [GUI модуль (Swing)](#GUI-модуль-swing)
 * [Async модуль](#Async-модуль)
+* [Спецификация языка](../spec/specification.ru.md)
 
 
 # Первая программа

@@ -1,0 +1,6 @@
+pub def main() {
+    var value = 1
+    case value {
+        int => println(1)
+    }
+}

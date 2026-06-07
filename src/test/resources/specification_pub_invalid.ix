@@ -1,0 +1,3 @@
+pub case value {
+    int x => x
+}

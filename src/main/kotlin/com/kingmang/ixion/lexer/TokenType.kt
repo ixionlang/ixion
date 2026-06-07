@@ -4,7 +4,6 @@ import java.util.*
 
 enum class TokenType {
     CASE("case"),
-    WITH("with"),
     FOR("for"),
     WHILE("while"),
     IF("if"),
@@ -19,7 +18,7 @@ enum class TokenType {
     PUB("pub"),
     USE("use"),
     NEW("new"),
-    MUT("mut"),
+    //MUT("mut"),
     LAMBDA("lambda"),
 
     LPAREN("("),
@@ -54,7 +53,6 @@ enum class TokenType {
     POW("**"),
     PIPE("|"),
     ARROW("=>"),
-    WALRUS(":="),
 
 
     NOT("!"),

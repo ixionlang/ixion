@@ -267,6 +267,7 @@ enum class BuiltInType(
                 TokenType.INT -> INT
                 TokenType.FLOAT -> FLOAT
                 TokenType.DOUBLE -> DOUBLE
+                TokenType.CHAR -> CHAR
                 else -> throw IllegalStateException("Unexpected value: $tokenType")
             }
         }
