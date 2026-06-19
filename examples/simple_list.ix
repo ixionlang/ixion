@@ -1,13 +1,13 @@
-use <prelude>
+use <std>
 
 pub def main(){
 
     var int_list = [1,2,3]
     var int_list2 = int[]
 
-    list_append(int_list2, 20)
+    std::push(int_list2, 20)
 
-    println(int_list)
-    println(int_list2)
+    std::println(int_list)
+    std::println(int_list2)
 
 }

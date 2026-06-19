@@ -1,8 +1,8 @@
-use <prelude>
+use <std>
 use <http>
 
 pub def main() {
     var url = "https://example.com"
-    prelude::println("status: " + http::status("GET", url, ""))
-    prelude::println(http::get(url))
+    std::println("status: " + http::status("GET", url, ""))
+    std::println(http::get(url))
 }

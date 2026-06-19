@@ -1,4 +1,4 @@
-use <prelude>
+use <std>
 
 type left_value = struct {
     arg : string
@@ -18,7 +18,7 @@ def new_value(l_arg : string, r_arg : string) : value {
 }
 
 def print_value(v : value) {
-    println("value{left{" + v.left.arg + "}, " + "right{" + v.right.arg + "}}")
+    std::println("value{left{" + v.left.arg + "}, " + "right{" + v.right.arg + "}}")
 }
 
 pub def main(){

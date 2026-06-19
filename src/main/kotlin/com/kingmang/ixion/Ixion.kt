@@ -26,6 +26,7 @@ class Ixion {
             when (arg) {
                 "-h", "--help" -> helpRequested = true
                 "--java" -> target = CompilationTarget.JAVA_SOURCE
+                "--go" -> target = CompilationTarget.GO_SOURCE
                 "--compile-only" -> compileOnly = true
                 "--optimize" -> optimize = true
                 else -> if (entry == null && !arg.startsWith("-")) {
@@ -176,6 +177,14 @@ class Ixion {
                         "Java source generated: ${Path.of(moduleLocation, IxionConstant.OUT_DIR, "$basePath.java")}"
                     )
                 }
+            } else if (target == CompilationTarget.GO_SOURCE) {
+                classPath = api.compileToGo(moduleLocation, entry, optimize)
+
+                if (compileOnly) {
+                    debug("Go source generated under: ${Path.of(moduleLocation, IxionConstant.OUT_DIR)}")
+                } else {
+                    exit("Go backend only emits source code; use --compile-only.", 4)
+                }
             } else {
                 classPath = api.compile(moduleLocation, entry, optimize)
 
@@ -196,7 +205,8 @@ class Ixion {
 
     enum class CompilationTarget {
         JVM_BYTECODE,
-        JAVA_SOURCE
+        JAVA_SOURCE,
+        GO_SOURCE
     }
 
     // for unit tests:

@@ -1,10 +1,10 @@
-use <prelude>
+use <std>
 
 pub def main(){
     // for loop
     var list = [1,2,3,4,5]
     for i : list {
-        println(i)
+        std::println(i)
     }
 
     /* in process..
@@ -17,12 +17,12 @@ pub def main(){
 
     */
 
-    println("----")
+    std::println("----")
 
     //while loop
     var i = 10
     while i < 20 {
-        println("i is " + i)
+        std::println("i is " + i)
         i++
     }
 

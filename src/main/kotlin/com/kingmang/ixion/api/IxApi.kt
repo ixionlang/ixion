@@ -5,6 +5,7 @@ import com.kingmang.ixion.ast.ExportStatement
 import com.kingmang.ixion.ast.UseStatement
 import com.kingmang.ixion.codegen.BytecodeGenerator
 import com.kingmang.ixion.codegen.JavaCodegenVisitor
+import com.kingmang.ixion.api.PublicAccess
 import com.kingmang.ixion.semantic.SemanticVisitor
 import com.kingmang.ixion.exception.IxException
 import com.kingmang.ixion.exception.IxException.CompilerError
@@ -285,6 +286,72 @@ data class IxApi(
     }
 
     /**
+     * Compiles Ixion code to Go source code.
+     * The backend intentionally supports a smaller, explicit subset of the language
+     * and fails fast on constructs that cannot be represented safely.
+     */
+    @Throws(FileNotFoundException::class, CompilerError::class)
+    fun compileToGo(projectRoot: String, filename: String?, optimize: Boolean = false): String {
+        val relativePath = FilenameUtils.getPath(filename)
+        val name = FilenameUtils.getName(filename)
+
+        val entry = parse(projectRoot, relativePath, name)
+        IxException.killIfErrors(this, "Correct parser errors before continuing.")
+
+        for (filePath in compilationSet!!.keys) {
+            val source: IxFile = compilationSet[filePath]!!
+            val semanticVisitor = SemanticVisitor(this, source.rootContext, source)
+            source.acceptVisitor(semanticVisitor)
+
+            for (stmt in source.statements) {
+                if (stmt is ExportStatement) {
+                    val exportedStatement = stmt.stmt
+                    if (exportedStatement is PublicAccess) {
+                        val identifier = exportedStatement.identifier()
+                        val type = source.rootContext.getVariable(identifier)
+                        if (type != null) {
+                            source.exports[identifier] = type
+                        }
+                    }
+                }
+            }
+            IxException.killIfErrors(this, "Correct syntax errors before type checking can continue.")
+        }
+
+        for (filePath in compilationSet.keys) {
+            val source: IxFile = compilationSet[filePath]!!
+            for (s in source.imports.keys) {
+                val sourceFile = source.imports[s]
+                val exportedMembers = sourceFile!!.exports
+                for (exportedName in exportedMembers.keys) {
+                    val exportedType = exportedMembers[exportedName]
+                    val qualifiedName = sourceFile.name + "::" + exportedName
+                    if (exportedType is DefType) {
+                        exportedType.external = sourceFile
+                    }
+                    source.rootContext.addVariable(qualifiedName, exportedType)
+                }
+            }
+        }
+
+        for (filePath in compilationSet.keys) {
+            val source: IxFile = compilationSet[filePath]!!
+            val typeCheckVisitor = TypeCheckVisitor(this, source.rootContext, source)
+            source.acceptVisitor(typeCheckVisitor)
+            IxException.killIfErrors(this, "Correct type errors before compilation can continue.")
+        }
+        if (optimize) {
+            val optimizer = ConstantFoldingVisitor()
+            for (source in compilationSet.values) {
+                optimizer.optimize(source)
+            }
+        }
+
+        val base = entry.fullRelativePath
+        return base.replace("/", ".")
+    }
+
+    /**
      * Generates separate Java files for structures
      * @param source The source file containing structures
      * @param structClasses Map of structure names to their generated code
@@ -340,6 +407,7 @@ data class IxApi(
         return when (target) {
             CompilationTarget.JVM_BYTECODE -> compile(projectRoot, filename)
             CompilationTarget.JAVA_SOURCE -> compileToJava(projectRoot, filename)
+            CompilationTarget.GO_SOURCE -> compileToGo(projectRoot, filename)
         }
     }
 
@@ -348,7 +416,8 @@ data class IxApi(
      */
     enum class CompilationTarget {
         JVM_BYTECODE,
-        JAVA_SOURCE
+        JAVA_SOURCE,
+        GO_SOURCE
     }
 
     /**

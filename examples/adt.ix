@@ -1,4 +1,4 @@
-use <prelude>
+use <std>
 
 type number = int | float
 
@@ -9,7 +9,7 @@ pub def main(){
 
 def print_type(num : number){
     case num {
-        int i => println("value " + i + " is integer")
-        float f => println("value " + f + " is float")
+        int i => std::println("value " + i + " is integer")
+        float f => std::println("value " + f + " is float")
     }
 }
