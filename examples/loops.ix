@@ -1,25 +1,11 @@
 use <std>
 
 pub def main(){
-    // for loop
-    var list = [1,2,3,4,5]
-    for i : list {
+
+    for i : std::range(7,10) {
         std::println(i)
     }
 
-    /* in process..
-
-    println("----")
-
-    for i : range(7,10) {
-        println(i)
-    }
-
-    */
-
-    std::println("----")
-
-    //while loop
     var i = 10
     while i < 20 {
         std::println("i is " + i)
