@@ -1,0 +1,21 @@
+use <std>
+use <strings>
+
+pub def main() {
+    std::println(strings::toUpperCase("hello world"))
+    std::println(strings::toLowerCase("HELLO WORLD"))
+    std::println(strings::toTitleCase("hello world"))
+    std::println(strings::toTitleCase("heLLo worlD"))
+
+    if strings::equals("exit", "exit") {
+        std::println("equal")
+    } else { // unreachable
+        std::println("not equal")
+    }
+
+    if strings::equals("hello", "world") {
+        std::println("equal") // unreachable
+    } else {
+        std::println("not equal")
+    }
+}
