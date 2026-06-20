@@ -89,6 +89,18 @@ class ExamplesTest {
     }
 
     @Test
+    fun strings_module() {
+        ixAssert("strings_test.ix", """
+            HELLO WORLD
+            hello world
+            Hello World
+            Hello World
+            equal
+            not equal
+        """)
+    }
+
+    @Test
     fun specification_use_requires_angle_brackets() {
         ixAssertError("specification_use_invalid.ix", "Expected '<' at the start of using path")
     }
