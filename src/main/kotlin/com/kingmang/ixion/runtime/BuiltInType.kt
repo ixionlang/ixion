@@ -9,11 +9,11 @@ import java.io.Serializable
 
 enum class BuiltInType(
     name: String,
-    typeClass: Class<*>,
-    descriptor: String,
-    opcodes: TypeSpecificOpcodes,
-    defaultValue: Any?,
-    isNumeric: Boolean
+    override val typeClass: Class<*>,
+    override val descriptor: String,
+    private val opcodes: TypeSpecificOpcodes,
+    override val defaultValue: Any?,
+    override val isNumeric: Boolean
 ) : IxType, Serializable {
     BOOLEAN(
         "bool",
@@ -86,22 +86,6 @@ enum class BuiltInType(
         false,
         false
     );
-
-    private val namee: String?
-    override val typeClass: Class<*>?
-    override val descriptor: String?
-    private val opcodes: TypeSpecificOpcodes
-    override val defaultValue: Any?
-    override val isNumeric: Boolean
-
-    init {
-        this.namee = name
-        this.typeClass = typeClass
-        this.descriptor = descriptor
-        this.opcodes = opcodes
-        this.defaultValue = defaultValue
-        this.isNumeric = isNumeric
-    }
 
     fun doBoxing(mv: MethodVisitor) {
         when (this) {

@@ -55,6 +55,13 @@ enum class TokenType {
     ARROW("=>"),
 
 
+    ASSIGNADD("+="),
+    ASSIGNSUB("-="),
+    ASSIGNMUL("*="),
+    ASSIGNDIV("/="),
+    ASSIGNMOD("%="),
+    ASSIGNXOR("^="),
+
     NOT("!"),
     PLUSPLUS("++"),
     MINUSMINUS("--"),

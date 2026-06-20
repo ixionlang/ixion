@@ -28,6 +28,12 @@ class Parser(private val lexer: Lexer) {
     init {
         // Register infix parsers for operators and accessors
         putInfix(TokenType.ASSIGN, AssignOperatorParser())
+        putInfix(TokenType.ASSIGNADD, CompoundAssignOperatorParser(TokenType.ADD))
+        putInfix(TokenType.ASSIGNSUB, CompoundAssignOperatorParser(TokenType.SUB))
+        putInfix(TokenType.ASSIGNMUL, CompoundAssignOperatorParser(TokenType.MUL))
+        putInfix(TokenType.ASSIGNDIV, CompoundAssignOperatorParser(TokenType.DIV))
+        putInfix(TokenType.ASSIGNMOD, CompoundAssignOperatorParser(TokenType.MOD))
+        putInfix(TokenType.ASSIGNXOR, CompoundAssignOperatorParser(TokenType.XOR))
         putInfix(TokenType.DOT, PropertyAccessParser())
         putInfix(TokenType.LBRACK, IndexAccessParser())
 

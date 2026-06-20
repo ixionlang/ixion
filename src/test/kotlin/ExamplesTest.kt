@@ -70,6 +70,18 @@ class ExamplesTest {
     }
 
     @Test
+    fun compound_assignment() {
+        ixAssert("compound_assignment.ix", """
+            15
+            12
+            24
+            6
+            2
+            true
+        """)
+    }
+
+    @Test
     fun module_qualifier() {
         ixAssert("module_qualifier.ix", """
             a+b%26c

@@ -58,20 +58,23 @@ class LexerImpl(file: File) : Lexer {
 
             when (currentChar) {
                 ' ', '\r', '\t', '\n' -> advance()
-                '/' -> handleComment()
+                '/' -> if (!handleComment()) return
                 else -> return
             }
         }
     }
 
-    private fun handleComment() {
+    private fun handleComment(): Boolean {
         val nextChar = peekNext()
 
         if (nextChar == '/') {
             skipSingleLineComment()
+            return true
         } else if (nextChar == '*') {
             skipMultiLineComment()
+            return true
         }
+        return false
     }
 
 

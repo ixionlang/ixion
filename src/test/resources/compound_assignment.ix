@@ -1,0 +1,18 @@
+use <std>
+
+pub def main(){
+    var x = 10
+    x += 5
+    std::println(x)
+    x -= 3
+    std::println(x)
+    x *= 2
+    std::println(x)
+    x /= 4
+    std::println(x)
+    x %= 4
+    std::println(x)
+    var b = true
+    b ^= false
+    std::println(b)
+}
