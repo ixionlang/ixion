@@ -13,6 +13,7 @@ object Modules {
         modules["std"] = Prelude::class.java
         modules["http"] = HttpModule::class.java
         modules["async"] = AsyncModule::class.java
+        modules["strings"] = StringModule::class.java
     }
 
     @JvmStatic

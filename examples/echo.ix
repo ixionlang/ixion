@@ -1,0 +1,20 @@
+use <std>
+use <async>
+use <strings>
+
+pub def main() {
+    var running = true
+    while (running) {
+        var input = std::readLine()
+        if strings::equals(input, "exit") {
+            running = false
+        } else {
+            async::sleep(600)
+            std::println(strings::toUpperCase(input))
+            async::sleep(500)
+            std::println(strings::toTitleCase(input))
+            async::sleep(400)
+            std::println(strings::toLowerCase(input))
+        }
+    }
+}
