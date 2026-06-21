@@ -11,7 +11,7 @@ import com.kingmang.ixion.exception.IxException
 import com.kingmang.ixion.exception.IxException.CompilerError
 import com.kingmang.ixion.exception.ModuleNotFoundException
 import com.kingmang.ixion.modules.Modules
-import com.kingmang.ixion.optimizer.ConstantFoldingVisitor
+import com.kingmang.ixion.optimizer.Optimizer
 import com.kingmang.ixion.runtime.DefType
 import com.kingmang.ixion.runtime.IxionExitException
 import com.kingmang.ixion.typechecker.TypeCheckVisitor
@@ -99,10 +99,7 @@ data class IxApi(
             IxException.killIfErrors(this, "Correct type errors before compilation can continue.")
         }
         if (optimize) {
-            val optimizer = ConstantFoldingVisitor()
-            for (source in compilationSet.values) {
-                optimizer.optimize(source)
-            }
+            Optimizer().optimize(compilationSet!!)
         }
         output(compilationSet)
 
@@ -220,10 +217,7 @@ data class IxApi(
             IxException.killIfErrors(this, "Correct type errors before compilation can continue.")
         }
         if (optimize) {
-            val optimizer = ConstantFoldingVisitor()
-            for (source in compilationSet.values) {
-                optimizer.optimize(source)
-            }
+            Optimizer().optimize(compilationSet!!)
         }
 
         outputJava(compilationSet)
@@ -341,10 +335,7 @@ data class IxApi(
             IxException.killIfErrors(this, "Correct type errors before compilation can continue.")
         }
         if (optimize) {
-            val optimizer = ConstantFoldingVisitor()
-            for (source in compilationSet.values) {
-                optimizer.optimize(source)
-            }
+            Optimizer().optimize(compilationSet!!)
         }
 
         val base = entry.fullRelativePath
