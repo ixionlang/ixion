@@ -292,14 +292,13 @@ class DeadCodeEliminationVisitor : Visitor<Any> {
     override fun visitUnionType(statement: UnionTypeStatement): Any = statement
 
     private fun isTerminatingStatement(stmt: Statement): Boolean {
-        return when (stmt) {
-+         is BlockStatement -> {
-+              val last = stmt.statements.lastOrNull { it != null } ?: return false
-+              isTerminatingStatement(last)
-+          }
-+          is ReturnStatement -> true
-+          else -> false
-+       }
+        var current = stmt
+        while (current is BlockStatement) {
+            val nonNull = current.statements.filterNotNull()
+            if (nonNull.isEmpty()) return false
+            current = nonNull.last()
+        }
+        return current is ReturnStatement
     }
 
     private fun asBlockStatement(stmt: Statement): BlockStatement {
