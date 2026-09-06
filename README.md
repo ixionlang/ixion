@@ -1,7 +1,7 @@
 <div align="center">
-  <img src="https://github.com/ixionlang/ixion/blob/main/assets/logo.png" width="500">
-
-Multi-paradigm compiled programming language for the jvm platform.
+  <img src="assets/logo.svg" width="500" style="margin: 50px 0; padding: 20px 0; display: block;">
+  
+  Multi-paradigm compiled programming language for the jvm platform.
 </div>
 
 
