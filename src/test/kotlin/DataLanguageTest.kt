@@ -14,6 +14,60 @@ import javax.tools.ToolProvider
 class DataLanguageTest {
     @TempDir lateinit var temporary: Path
 
+    @Test fun boolean_algebra_optimization_is_controlled_by_optimize_flag() {
+        for (optimize in listOf(false, true)) {
+            val root = project("""
+                def simplify(a: bool, b: bool): bool { return (a ^ b) ^ a }
+                def main() {}
+            """)
+            val api = IxApi()
+            val file = api.parse(root.toString(), "", "program.ix")
+            api.analyze(optimize)
+            val function = file.statements.first() as com.kingmang.ixion.ast.DefStatement
+            val result = (function.body!!.statements.first() as com.kingmang.ixion.ast.ReturnStatement).expression!!
+            if (optimize) {
+                assertEquals("b", (result as com.kingmang.ixion.ast.IdentifierExpression).identifier.source)
+            } else {
+                assertTrue(result is com.kingmang.ixion.ast.BinaryExpression)
+            }
+        }
+    }
+
+    @Test fun boolean_algebra_optimization_preserves_both_backends_and_evaluation_order() {
+        val calls = (0..15).joinToString("\n") { mask ->
+            val args = (0..3).joinToString(", ") { bit -> (mask and (1 shl bit) != 0).toString() }
+            "std::println(poly($args)) std::println(complement($args))"
+        }
+        val truthTable = (0..15).flatMap { mask ->
+            val a = mask and 1 != 0
+            val b = mask and 2 != 0
+            val c = mask and 4 != 0
+            val d = mask and 8 != 0
+            listOf(((a && b) xor (c && d)).toString(), (!(a xor b)).toString())
+        }.joinToString("\n")
+        val source = """
+            use <std>
+            def poly(a: bool, b: bool, c: bool, d: bool): bool {
+                return ((((a && b) ^ (c && d)) ^ a) ^ a)
+            }
+            def complement(a: bool, b: bool, c: bool, d: bool): bool {
+                return !((((a ^ b) ^ c) ^ c))
+            }
+            def effect(): bool { std::println("effect") return true }
+            def short(a: bool): bool { return a || effect() }
+            def guarded(x: int): bool { return x != 0 && 10 / x > 2 }
+            def main() {
+                $calls
+                std::println(short(true))
+                std::println(short(false))
+                std::println(effect() ^ effect())
+                std::println(guarded(0))
+            }
+        """
+        val expected = "$truthTable\ntrue\neffect\ntrue\neffect\neffect\nfalse\nfalse"
+        for (optimize in listOf(false, true)) execute(source, expected, optimize = optimize)
+    }
+
     private fun project(source: String, modules: Map<String, String> = emptyMap()): Path {
         val root = Files.createTempDirectory(temporary, "data")
         Files.writeString(root.resolve("program.ix"), source.trimIndent())

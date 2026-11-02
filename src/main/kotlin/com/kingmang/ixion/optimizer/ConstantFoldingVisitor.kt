@@ -9,6 +9,7 @@ import com.kingmang.ixion.runtime.BuiltInType
 import kotlin.math.pow
 
 class ConstantFoldingVisitor : Visitor<Any> {
+    private val booleanOptimizer = BooleanAlgebraOptimizer()
     // Match plans refer to checked syntax; retain these nodes and their annotations.
     override fun visitUnit(expression: UnitExpression): Any = expression
     override fun visitTuple(expression: TupleExpression): Any = expression
@@ -27,7 +28,7 @@ class ConstantFoldingVisitor : Visitor<Any> {
     }
 
     private fun rewriteExpression(expression: Expression): Expression {
-        return expression.accept(this) as Expression
+        return booleanOptimizer.optimize(expression.accept(this) as Expression)
     }
 
     override fun visit(statement: Statement): Any = rewriteStatement(statement)
