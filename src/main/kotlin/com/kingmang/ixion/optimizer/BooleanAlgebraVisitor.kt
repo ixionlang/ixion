@@ -11,8 +11,12 @@ import com.kingmang.ixion.runtime.BuiltInType
  * calls, property/index access and comparisons are not atoms: changing their evaluation
  * count or short-circuit guards could change effects, exceptions or termination.
  */
-class BooleanAlgebraOptimizer {
-    fun optimize(expression: Expression): Expression {
+class BooleanAlgebraVisitor : AstRewriteVisitor() {
+    /**
+     * Returns a smaller equivalent boolean tree, considering both ANF and its negated complement.
+     * Returns [expression] unchanged if conversion is unsafe, exceeds a limit, or saves no nodes.
+     */
+    override fun transformExpression(expression: Expression): Expression {
         if (expression.realType != BuiltInType.BOOLEAN ||
             expression !is BinaryExpression && expression !is PrefixExpression) return expression
         val conversion = Conversion()
@@ -31,8 +35,11 @@ class BooleanAlgebraOptimizer {
         var nodes = 0
         private var work = 0
 
-        // A monomial is a bitset of variables; a polynomial is the set of monomials
-        // with coefficient 1. Mask 0 denotes the constant 1; the empty set is 0.
+        /**
+         * Converts supported boolean syntax into monomial masks with coefficient 1.
+         * Each mask contains the bits of its variables; mask 0 is constant 1 and an empty
+         * set is constant 0. Returns null for unsafe syntax or an exhausted conversion budget.
+         */
         fun read(expression: Expression): Set<Int>? {
             if (++nodes > MAX_NODES || expression.realType != BuiltInType.BOOLEAN) return null
             return when (expression) {
@@ -71,6 +78,7 @@ class BooleanAlgebraOptimizer {
             }
         }
 
+        /** Adds polynomials modulo 2, returning null if the work or term limit is exceeded. */
         private fun add(left: Set<Int>, right: Set<Int>): Set<Int>? {
             val result = left.toMutableSet()
             for (term in right) {
@@ -81,6 +89,10 @@ class BooleanAlgebraOptimizer {
             return result
         }
 
+        /**
+         * Multiplies polynomials using mask union for x*x = x and cancellation modulo 2.
+         * Returns null if the work or intermediate term limit is exceeded.
+         */
         private fun multiply(left: Set<Int>, right: Set<Int>): Set<Int>? {
             val result = mutableSetOf<Int>()
             for (a in left) for (b in right) {
@@ -91,6 +103,10 @@ class BooleanAlgebraOptimizer {
             return result
         }
 
+        /**
+         * Builds a deterministic XOR of AND terms, reusing the recorded variable leaves.
+         * New nodes inherit [original]'s position and boolean type; an empty polynomial is false.
+         */
         fun emit(polynomial: Set<Int>, original: Expression): Expression {
             val leaves = variables.values.toList()
             val terms = polynomial.sorted().map { mask ->
@@ -112,17 +128,19 @@ class BooleanAlgebraOptimizer {
         private val OPERATORS = setOf(TokenType.AND, TokenType.OR, TokenType.XOR,
             TokenType.EQUAL, TokenType.NOTEQUAL)
 
+        /** Toggles a monomial's coefficient modulo 2 by adding or removing its mask. */
         private fun toggle(terms: MutableSet<Int>, term: Int) {
             if (!terms.add(term)) terms.remove(term)
         }
 
-        // AST size is a conservative local heuristic, not a prediction of JIT performance.
+        /** Counts syntax nodes as a local size heuristic, without predicting JIT performance. */
         private fun cost(expression: Expression): Int = when (expression) {
             is BinaryExpression -> 1 + cost(expression.left) + cost(expression.right)
             is PrefixExpression -> 1 + cost(expression.right)
             else -> 1
         }
 
+        /** Creates a supported boolean operator or literal token at [original]'s source position. */
         private fun token(type: TokenType, original: Expression) =
             Token(type, original.position?.line ?: 0, original.position?.col ?: 0, when (type) {
                 TokenType.AND -> "&&"
@@ -132,10 +150,12 @@ class BooleanAlgebraOptimizer {
                 else -> "false"
             })
 
+        /** Creates a typed boolean constant while retaining [original]'s source position. */
         private fun literal(value: Boolean, original: Expression): Expression =
             LiteralExpression(original.position, token(if (value) TokenType.TRUE else TokenType.FALSE, original))
                 .also { it.realType = BuiltInType.BOOLEAN }
 
+        /** Joins two boolean trees with [op], preserving the source position and checked type. */
         private fun binary(left: Expression, op: TokenType, right: Expression, original: Expression): Expression =
             BinaryExpression(original.position, left, token(op, original), right)
                 .also { it.realType = BuiltInType.BOOLEAN }

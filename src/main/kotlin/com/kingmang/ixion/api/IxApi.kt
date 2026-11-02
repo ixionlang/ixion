@@ -11,6 +11,7 @@ import com.kingmang.ixion.exception.IxException.CompilerError
 import com.kingmang.ixion.exception.ModuleNotFoundException
 import com.kingmang.ixion.modules.Modules
 import com.kingmang.ixion.optimizer.ConstantFoldingVisitor
+import com.kingmang.ixion.optimizer.BooleanAlgebraVisitor
 import com.kingmang.ixion.runtime.IxionExitException
 import com.kingmang.ixion.typechecker.TypeCheckVisitor
 import org.apache.commons.io.FilenameUtils
@@ -79,7 +80,10 @@ data class IxApi(
             source.statements.forEach { checker.visit(it) }
         }
         IxException.killIfErrors(this, "Correct type errors before compilation can complete.")
-        if (optimize) sources.forEach { ConstantFoldingVisitor().optimize(it) }
+        if (optimize) {
+            sources.forEach { ConstantFoldingVisitor().optimize(it) }
+            sources.forEach { BooleanAlgebraVisitor().optimize(it) }
+        }
     }
 
     /**

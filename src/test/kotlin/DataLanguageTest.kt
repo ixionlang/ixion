@@ -14,6 +14,7 @@ import javax.tools.ToolProvider
 class DataLanguageTest {
     @TempDir lateinit var temporary: Path
 
+    /** Verifies that semantic analysis simplifies the checked AST only when optimization is enabled. */
     @Test fun boolean_algebra_optimization_is_controlled_by_optimize_flag() {
         for (optimize in listOf(false, true)) {
             val root = project("""
@@ -33,6 +34,7 @@ class DataLanguageTest {
         }
     }
 
+    /** Checks JVM and Java results, short-circuit guards, and call counts with optimization on and off. */
     @Test fun boolean_algebra_optimization_preserves_both_backends_and_evaluation_order() {
         val calls = (0..15).joinToString("\n") { mask ->
             val args = (0..3).joinToString(", ") { bit -> (mask and (1 shl bit) != 0).toString() }
