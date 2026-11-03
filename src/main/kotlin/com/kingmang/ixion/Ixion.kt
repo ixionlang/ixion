@@ -36,6 +36,7 @@ class Ixion {
         }
     }
 
+    /** Prints command-line usage and the available compilation and optimization options. */
     private fun printHelp() {
         println("Usage: ixion [OPTIONS] <entry-file>")
         println("Compile and run an ixion program.\n")
@@ -43,7 +44,7 @@ class Ixion {
         println("  -h, --help        Display this help message")
         println("  --java            Generate Java source code instead of bytecode")
         println("  --compile-only    Only compile, do not run\n")
-        println("  --optimize        Enable optimizer passes (constant folding)\n")
+        println("  --optimize        Enable optimizations (now it's only constant folding and bounded boolean simplification)\n")
     }
 
     @Throws(IOException::class, InterruptedException::class)

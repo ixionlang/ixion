@@ -1,241 +1,21 @@
 package com.kingmang.ixion.optimizer
 
-import com.kingmang.ixion.Visitor
-import com.kingmang.ixion.api.IxFile
 import com.kingmang.ixion.ast.*
 import com.kingmang.ixion.lexer.Token
 import com.kingmang.ixion.lexer.TokenType
 import com.kingmang.ixion.runtime.BuiltInType
 import kotlin.math.pow
 
-class ConstantFoldingVisitor : Visitor<Any> {
-    // Match plans refer to checked syntax; retain these nodes and their annotations.
-    override fun visitUnit(expression: UnitExpression): Any = expression
-    override fun visitTuple(expression: TupleExpression): Any = expression
-    override fun visitTypeApplication(expression: TypeApplicationExpression): Any = expression
-    override fun visitUpdate(expression: UpdateExpression): Any = expression
-    override fun visitBlockExpression(expression: BlockExpression): Any = expression
-    override fun visitCaseExpression(expression: CaseExpression): Any = expression
-    fun optimize(file: IxFile) {
-        for (i in file.statements.indices) {
-            file.statements[i] = rewriteStatement(file.statements[i])
-        }
+/** Evaluates supported operations on literal operands without applying variable-based algebra. */
+class ConstantFoldingVisitor : AstRewriteVisitor() {
+    /** Folds literal operands after the shared traversal has rewritten their children. */
+    override fun transformExpression(expression: Expression): Expression = when (expression) {
+        is BinaryExpression -> foldBinary(expression, expression.left, expression.right) ?: expression
+        is PrefixExpression -> foldPrefix(expression, expression.right) ?: expression
+        else -> expression
     }
 
-    private fun rewriteStatement(statement: Statement): Statement {
-        return statement.accept(this) as Statement
-    }
-
-    private fun rewriteExpression(expression: Expression): Expression {
-        return expression.accept(this) as Expression
-    }
-
-    override fun visit(statement: Statement): Any = rewriteStatement(statement)
-
-    override fun visitTypeAlias(statement: TypeAliasStatement): Any = statement
-
-    override fun visitBlockStmt(statement: BlockStatement): Any {
-        val rewritten = mutableListOf<Statement?>()
-        for (stmt in statement.statements) {
-            rewritten.add(if (stmt == null) null else rewriteStatement(stmt))
-        }
-        return BlockStatement(statement.position, rewritten, statement.context)
-    }
-
-    override fun visitEnum(statement: EnumStatement): Any = statement
-
-    override fun visitExport(statement: ExportStatement): Any {
-        return ExportStatement(statement.position, rewriteStatement(statement.stmt))
-    }
-
-    override fun visitExpressionStmt(statement: ExpressionStatement): Any {
-        return ExpressionStatement(statement.position, rewriteExpression(statement.expression))
-    }
-
-    override fun visitFor(statement: ForStatement): Any {
-        return ForStatement(
-            statement.position,
-            statement.name,
-            rewriteExpression(statement.expression),
-            rewriteStatement(statement.block) as BlockStatement
-        )
-    }
-
-    override fun visitFunctionStmt(statement: DefStatement): Any {
-        return DefStatement(
-            statement.position,
-            statement.name,
-            statement.parameters,
-            statement.returnType,
-            if (statement.body == null) null else rewriteStatement(statement.body) as BlockStatement,
-            statement.generics
-        ).also { it.functionType = statement.functionType }
-    }
-
-    override fun visitIf(statement: IfStatement): Any {
-        return IfStatement(
-            statement.position,
-            rewriteExpression(statement.condition),
-            rewriteStatement(statement.trueBlock) as BlockStatement,
-            if (statement.falseStatement == null) null else rewriteStatement(statement.falseStatement)
-        )
-    }
-
-    override fun visitUse(statement: UseStatement): Any = statement
-
-
-
-    override fun visitParameterStmt(statement: ParameterStatement): Any = statement
-
-    override fun visitReturnStmt(statement: ReturnStatement): Any {
-        return ReturnStatement(
-            statement.position,
-            if (statement.expression == null) null else rewriteExpression(statement.expression)
-        )
-    }
-
-    override fun visitStruct(statement: StructStatement): Any = statement
-
-    override fun visitTypeAlias(statement: TypeStatement): Any = statement
-
-    override fun visitUnionType(statement: UnionTypeStatement): Any = statement
-
-    override fun visitVariable(statement: VariableStatement): Any {
-        return VariableStatement(
-            statement.position,
-            statement.mutability,
-            statement.name,
-            rewriteExpression(statement.expression),
-            statement.type
-        )
-    }
-
-    override fun visitWhile(statement: WhileStatement): Any {
-        return WhileStatement(
-            statement.position,
-            rewriteExpression(statement.condition),
-            rewriteStatement(statement.block) as BlockStatement
-        )
-    }
-
-    override fun visitAssignExpr(expression: AssignExpression): Any {
-        val rewritten = AssignExpression(
-            expression.position,
-            rewriteExpression(expression.left),
-            rewriteExpression(expression.right)
-        )
-        rewritten.realType = expression.realType
-        return rewritten
-    }
-
-    override fun visitBad(expression: BadExpression): Any = expression
-
-    override fun visitBinaryExpr(expression: BinaryExpression): Any {
-        val left = rewriteExpression(expression.left)
-        val right = rewriteExpression(expression.right)
-        val folded = foldBinary(expression, left, right)
-        if (folded != null) return folded
-        val rewritten = BinaryExpression(expression.position, left, expression.operator, right)
-        rewritten.realType = expression.realType
-        return rewritten
-    }
-
-    override fun visitCall(expression: CallExpression): Any {
-        val item = rewriteExpression(expression.item)
-        val args = expression.arguments.mapTo(mutableListOf()) { rewriteExpression(it) }
-        val rewritten = CallExpression(expression.position, item, args)
-        rewritten.foreign = expression.foreign
-        rewritten.realType = expression.realType
-        rewritten.specialization = expression.specialization
-        return rewritten
-    }
-
-    override fun visitEmpty(expression: EmptyExpression): Any = expression
-
-    override fun visitEmptyList(expression: EmptyListExpression): Any = expression
-
-    override fun visitGroupingExpr(expression: GroupingExpression): Any {
-        val rewritten = rewriteExpression(expression.expression)
-        rewritten.realType = expression.realType
-        return rewritten
-    }
-
-    override fun visitIdentifierExpr(expression: IdentifierExpression): Any = expression
-
-    override fun visitIndexAccess(expression: IndexAccessExpression): Any {
-        val rewritten = IndexAccessExpression(
-            expression.position,
-            rewriteExpression(expression.left),
-            rewriteExpression(expression.right)
-        )
-        rewritten.realType = expression.realType
-        return rewritten
-    }
-
-    override fun visitLiteralExpr(expression: LiteralExpression): Any = expression
-
-    override fun visitLiteralList(expression: LiteralListExpression): Any {
-        val rewritten = LiteralListExpression(
-            expression.position,
-            expression.entries.mapTo(mutableListOf()) { rewriteExpression(it) }
-        )
-        rewritten.realType = expression.realType
-        return rewritten
-    }
-
-    override fun visitModuleAccess(expression: ModuleAccessExpression): Any {
-        val rewritten = ModuleAccessExpression(
-            expression.position,
-            rewriteExpression(expression.identifier) as IdentifierExpression,
-            rewriteExpression(expression.foreign)
-        )
-        rewritten.realType = expression.realType
-        return rewritten
-    }
-
-    override fun visitPostfixExpr(expression: PostfixExpression): Any {
-        val rewritten = PostfixExpression(
-            expression.position,
-            rewriteExpression(expression.expression),
-            expression.operator
-        )
-        rewritten.localIndex = expression.localIndex
-        rewritten.realType = expression.realType
-        return rewritten
-    }
-
-    override fun visitPrefix(expression: PrefixExpression): Any {
-        val right = rewriteExpression(expression.right)
-        val folded = foldPrefix(expression, right)
-        if (folded != null) return folded
-        val rewritten = PrefixExpression(expression.position, expression.operator, right)
-        rewritten.realType = expression.realType
-        return rewritten
-    }
-
-    override fun visitPropertyAccess(expression: PropertyAccessExpression): Any {
-        val rewritten = PropertyAccessExpression(
-            expression.position,
-            rewriteExpression(expression.expression),
-            expression.identifiers
-        )
-        rewritten.typeChain = expression.typeChain
-        rewritten.realType = expression.realType
-        return rewritten
-    }
-
-    override fun visitLambda(expression: LambdaExpression): Any = expression
-
-    override fun visitEnumAccess(expression: EnumAccessExpression): Any {
-        val rewritten = EnumAccessExpression(
-            expression.position,
-            rewriteExpression(expression.enumType),
-            rewriteExpression(expression.enumValue) as IdentifierExpression
-        )
-        rewritten.realType = expression.realType
-        return rewritten
-    }
-
+    /** Evaluates supported unary operations on literals, returning null for other operands. */
     private fun foldPrefix(original: PrefixExpression, right: Expression): Expression? {
         val literal = right as? LiteralExpression ?: return null
         return when (original.operator.type) {
@@ -255,6 +35,7 @@ class ConstantFoldingVisitor : Visitor<Any> {
         }
     }
 
+    /** Folds numeric, string, and boolean literal pairs without eliminating variable-dependent work. */
     private fun foldBinary(original: BinaryExpression, left: Expression, right: Expression): Expression? {
         val l = left as? LiteralExpression ?: return null
         val r = right as? LiteralExpression ?: return null
@@ -278,6 +59,7 @@ class ConstantFoldingVisitor : Visitor<Any> {
             val result = when (op) {
                 TokenType.AND -> lv && rv
                 TokenType.OR -> lv || rv
+                TokenType.XOR -> lv xor rv
                 TokenType.EQUAL -> lv == rv
                 TokenType.NOTEQUAL -> lv != rv
                 else -> return null
@@ -288,6 +70,7 @@ class ConstantFoldingVisitor : Visitor<Any> {
         return null
     }
 
+    /** Evaluates numeric literals using the checked result type, leaving division by zero intact. */
     private fun foldNumeric(original: BinaryExpression, left: Token, right: Token, op: TokenType, resultHint: com.kingmang.ixion.runtime.IxType): Expression? {
         val resultType = when (resultHint) {
             BuiltInType.INT -> TokenType.INT
@@ -338,6 +121,7 @@ class ConstantFoldingVisitor : Visitor<Any> {
         }
     }
 
+    /** Converts a folded number into the required literal kind and preserves its source position. */
     private fun numericLiteral(expression: Expression, type: TokenType, value: Double): Expression {
         return when (type) {
             TokenType.INT -> makeLiteral(expression, TokenType.INT, value.toInt().toString(), BuiltInType.INT)
@@ -347,11 +131,13 @@ class ConstantFoldingVisitor : Visitor<Any> {
         }
     }
 
+    /** Creates a checked boolean literal at the folded expression's source position. */
     private fun booleanLiteral(expression: Expression, value: Boolean): Expression {
         return if (value) makeLiteral(expression, TokenType.TRUE, "true", BuiltInType.BOOLEAN)
         else makeLiteral(expression, TokenType.FALSE, "false", BuiltInType.BOOLEAN)
     }
 
+    /** Builds a literal with the original source position and the supplied checked type. */
     private fun makeLiteral(expression: Expression, type: TokenType, source: String, foldedType: BuiltInType): Expression {
         val pos = expression.position
         val token = Token(type, pos?.line ?: 0, pos?.col ?: 0, source)

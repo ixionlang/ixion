@@ -294,7 +294,9 @@ class JavaCodegenVisitor(private val ixApi: IxApi, private val source: IxFile) :
         return Optional.empty()
     }
 
+    /** Emits a parenthesized binary expression so Java precedence preserves the checked AST. */
     override fun visitBinaryExpr(expression: BinaryExpression): Optional<String> {
+        print("(")
         expression.left.accept(this)
 
         val operator = when (expression.operator.type) {
@@ -317,6 +319,7 @@ class JavaCodegenVisitor(private val ixApi: IxApi, private val source: IxFile) :
 
         print(operator)
         expression.right.accept(this)
+        print(")")
         return Optional.empty()
     }
 
