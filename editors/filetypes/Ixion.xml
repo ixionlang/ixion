@@ -11,7 +11,7 @@
             <option name="HAS_PARENS" value="true" />
             <option name="HAS_STRING_ESCAPES" value="true" />
         </options>
-        <keywords keywords="var;const;type;use;false;true;pub" ignore_case="false" />
+        <keywords keywords="let;mut;type;use;false;true;pub" ignore_case="false" />
         <keywords2 keywords="def;struct;enum;for;case;if;else;while;return" />
         <keywords3 keywords="string;float;int;any;double" />
     </highlighting>

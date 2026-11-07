@@ -1,7 +1,7 @@
 use <std>
 
 pub def main() {
-    var add = lambda (a: int, b: int): int {
+    let add = lambda (a: int, b: int): int {
         return a + b
     }
 

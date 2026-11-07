@@ -27,8 +27,8 @@ def report(result: Result[Transfer, string]) {
 }
 
 def main() {
-    const alice = Account("Alice", 1000)
-    const bob = Account("Bob", 200)
+    let alice = Account("Alice", 1000)
+    let bob = Account("Bob", 200)
     report(transfer(alice, bob, 300))
     report(transfer(alice, bob, 1500))
     report(transfer(alice, bob, 0))

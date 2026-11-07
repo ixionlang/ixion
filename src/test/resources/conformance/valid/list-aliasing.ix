@@ -1,8 +1,8 @@
 use <std>
 
 def main() {
-    const before = [1, 2]
-    const after = std::append(before, 3)
+    let before = [1, 2]
+    let after = std::append(before, 3)
     std::println(std::len(before))
     std::println(std::len(after))
 }

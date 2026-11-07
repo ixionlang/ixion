@@ -27,8 +27,8 @@ def describe(state: Player): string {
 }
 
 def main() {
-    const events = [Event::Play("Midnight Drive"), Event::Pause, Event::Resume, Event::Stop]
-    var state: Player = Player::Stopped
+    let events = [Event::Play("Midnight Drive"), Event::Pause, Event::Resume, Event::Stop]
+    let mut state: Player = Player::Stopped
     for event : events {
         state = transition(state, event)
         std::println(describe(state))

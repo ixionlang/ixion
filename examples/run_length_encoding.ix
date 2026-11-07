@@ -18,7 +18,7 @@ def encode(values: int[]): Run[] {
 }
 
 def main() {
-    const runs = encode([4, 4, 4, 2, 2, 7, 4, 4])
+    let runs = encode([4, 4, 4, 2, 2, 7, 4, 4])
     for run : runs {
         std::println("" + run.value + " x " + run.count)
     }

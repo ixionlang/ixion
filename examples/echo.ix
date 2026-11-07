@@ -3,9 +3,9 @@ use <async>
 use <strings>
 
 pub def main() {
-    var running = true
+    let mut running = true
     while (running) {
-        var input = std::readLine()
+        let input = std::readLine()
         if strings::equals(input, "exit") {
             running = false
         } else {

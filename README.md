@@ -31,7 +31,7 @@ def mapTree[A, B](tree: Tree[A], f: (A) => B): Tree[B] {
 }
 
 def main() {
-  const tree = Tree::Node(Tree::Leaf(-1), Tree::Leaf(7))
+  let tree = Tree::Node(Tree::Leaf(-1), Tree::Leaf(7))
   std::println(mapTree(tree, lambda (n) { return n > 0 }))
 }
 ```
@@ -50,8 +50,8 @@ def mapResult[A, B, E](result: Result[A, E], f: (A) => B): Result[B, E] {
 }
 
 def main() {
-    const success: Result[int, string] = Result::Ok(21)
-    const failure: Result[int, string] = Result::Err("offline")
+    let success: Result[int, string] = Result::Ok(21)
+    let failure: Result[int, string] = Result::Err("offline")
 
     std::println(mapResult(success, lambda (n) { return n >= 18 }))
     // Ok(true)

@@ -21,7 +21,7 @@ def main() {
     readConfig("{}")
     readConfig("{\u0022name\u0022:42}")
     readConfig("{broken}")
-    const config = json::Value::Object([("name", json::Value::String("Ixion"))])
+    let config = json::Value::Object([("name", json::Value::String("Ixion"))])
     std::println(case json::stringify(config) {
         Result::Ok(text) => text,
         Result::Err(error) => error,

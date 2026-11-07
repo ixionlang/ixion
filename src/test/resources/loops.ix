@@ -2,7 +2,7 @@ use <std>
 
 pub def main(){
     // for loop
-    var list = [1,2,3,4,5]
+    let mut list = [1,2,3,4,5]
     for i : list {
         std::println(i)
     }
@@ -20,7 +20,7 @@ pub def main(){
     std::println("----")
 
     //while loop
-    var i = 10
+    let mut i = 10
     while i < 20 {
         std::println("i is " + i)
         i++

@@ -20,7 +20,7 @@ def jsonEcho(request: types::Request): types::Response {
 }
 
 def main() {
-    const routes = [
+    let routes = [
         router::route("GET", "/", lambda (request) { return response::text(200, "Hello, Ixion!") }),
         router::route("GET", "/health", lambda (request) { return response::text(200, "ok") }),
         router::route("GET", "/users/:id", lambda (request) { return user(request) }),
@@ -28,7 +28,7 @@ def main() {
         router::route("POST", "/json/echo", lambda (request) { return jsonEcho(request) }),
         router::route("POST", "/echo", lambda (request) { return response::text(200, request.body) })
     ]
-    const result = server::serve(types::config("127.0.0.1", 8080), lambda (request) {
+    let result = server::serve(types::config("127.0.0.1", 8080), lambda (request) {
         return router::dispatch(routes, request)
     })
     case result {

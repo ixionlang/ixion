@@ -1,18 +1,18 @@
 use <std>
 
 pub def main(){
-    var x: int = 42
+    let mut x: int = 42
     std::println(x)
 
-    var y: string = "hello"
+    let mut y: string = "hello"
     std::println(y)
 
-    var z: float = 3.14
+    let mut z: float = 3.14
     std::println(z)
 
-    const pi: float = 3.14
+    let pi: float = 3.14
     std::println(pi)
 
-    var w: double = 3.14d
+    let mut w: double = 3.14d
     std::println(w)
 }

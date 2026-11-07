@@ -18,6 +18,6 @@ def new_value(l_arg : string, r_arg : string) : value {
 }
 
 pub def main(){
-    var v = new_value("first", "second")
+    let mut v = new_value("first", "second")
     std::print(v)
 }

@@ -8,17 +8,15 @@ Ixion — язык программирования со статической 
 языком. Знание Kotlin или Java не требуется. Если программирование для вас тоже
 новая тема, читайте разделы по порядку: каждый следующий использует предыдущие.
 
-Руководство описывает реализованное ядро текущей рабочей версии компилятора.
-[Спецификация](../spec/specification.ru.md) содержит также целевые возможности,
-которые ещё находятся в разработке. Их перечень есть в
-[разделе об ограничениях](#ограничения-текущей-версии) и
+Формальные правила языка приведены в [спецификации Ixion](../spec/specification.ru.md).
+
 ## Содержание
 
 1. [Подготовка и запуск](#подготовка-и-запуск)
 2. [Первая программа](#первая-программа)
 3. [Как читать код](#как-читать-код)
 4. [Значения и базовые типы](#значения-и-базовые-типы)
-5. [Имена: const и var](#имена-const-и-var)
+5. [Привязки let и let mut](#привязки-let-и-let-mut)
 6. [Операторы и условия](#операторы-и-условия)
 7. [Функции](#функции)
 8. [Циклы](#циклы)
@@ -106,7 +104,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 ```
 
 Все команды ниже предполагают запуск из корня репозитория. Путь к программе
-может быть относительным, например `examples/tutorial.ix`. Локальные модули
+может быть относительным, например `examples/simple_list.ix`. Локальные модули
 ищутся относительно корня проекта, из которого запущен компилятор.
 
 ### Режимы компилятора
@@ -129,7 +127,6 @@ export PATH="$JAVA_HOME/bin:$PATH"
 Результаты компиляции появляются в каталоге `.out` в корне проекта.
 Обычный JAR из `build/libs` не содержит все зависимости и не настроен как
 самостоятельный исполняемый дистрибутив. Для знакомства пользуйтесь командой выше.
-Новые ADT и списки проверяются для JVM и Java; Go не является целью этого руководства.
 
 ## Первая программа
 
@@ -173,8 +170,7 @@ def main() {
 Пишите каждый оператор с новой строки. Точки с запятой не нужны. Между аргументами,
 параметрами, элементами списка, полями и ветвями `case` ставьте запятые.
 В объявлениях полей, вариантах `enum` и ветвях `case` завершающая запятая допустима.
-В литерале списка ставьте запятые только между элементами: `[1, 2, 3]`;
-завершающая запятая списка пока не поддерживается парсером.
+В литерале списка ставьте запятые только между элементами, как в `[1, 2, 3]`.
 
 Регистр важен: `count` и `Count` — разные имена. В примерах типы называются
 `Point`, `Task`, `Option`, а функции и переменные — `sum`, `task`, `count`.
@@ -210,12 +206,12 @@ def main() {
 use <std>
 
 def main() {
-    const count: int = 3
-    const price: double = 2.5d
-    const enabled: bool = true
-    const letter: char = 'A'
-    const title: string = "Ixion"
-    const finished: unit = ()
+    let count: int = 3
+    let price: double = 2.5d
+    let enabled: bool = true
+    let letter: char = 'A'
+    let title: string = "Ixion"
+    let finished: unit = ()
     std::println(count)
     std::println(price)
     std::println(enabled)
@@ -249,18 +245,19 @@ Ixion
 `never` нужен для функций, которые не возвращаются нормально, например `std::panic`.
 В обычных прикладных объявлениях новичку он требуется редко.
 
-## Имена: const и var
+## Привязки let и let mut
 
-Привязка связывает имя со значением. Используйте `const`, если имя не требуется
-переприсваивать. `var` нужен для локального состояния, например счётчика.
+Привязка связывает имя со значением. `let` создаёт неизменяемую привязку.
+Добавьте `mut`, если локальному имени нужно присваивать новые значения,
+например при обновлении счётчика.
 
 <!-- ixion-example: bindings -->
 ```ixion
 use <std>
 
 def main() {
-    const step = 2
-    var count = 1
+    let step = 2
+    let mut count = 1
     count = count + step
     count += 3
     std::println(count)
@@ -273,16 +270,18 @@ def main() {
 6
 ```
 
-`const` не означает «вычисляется при компиляции»: справа может стоять вызов функции.
-Он означает, что этому имени нельзя присвоить другое значение. Все привязки
-нужно инициализировать при объявлении.
+Каждая привязка требует инициализатора. Значение может вычисляться при выполнении
+программы, например вызовом функции.
 
-`var` разрешает заменить значение целиком, но не делает его поля или элементы
-изменяемыми. Список `[1, 2]` остаётся неизменяемым и через `const`, и через `var`.
-Параметры функций, имена в шаблонах и переменная обхода `for` тоже неизменяемы.
+`let mut` разрешает присвоить имени новое значение целиком. Поля структур и
+элементы списков остаются неизменяемыми при обеих формах объявления. Параметры
+функций, имена в шаблонах и переменная обхода `for` тоже неизменяемы.
 
-Объявляйте рабочие значения внутри функций. Инициализация модульных `const`
-ещё не завершена, а модульный `var` запрещён.
+Объявляйте рабочие значения внутри функций. На уровне модуля доступен только
+`let` без `mut`.
+
+При переносе старого кода замените объявления `const` на `let`, а объявления
+`var` на `let mut`.
 
 ## Операторы и условия
 
@@ -293,7 +292,7 @@ def main() {
 | Арифметика | `+`, `-`, `*`, `/`, `%` |
 | Сравнения чисел | `==`, `!=`, `<`, `<=`, `>`, `>=` |
 | Логика | `!`, `&&`, `||`, `^` — XOR |
-| Присваивание локальному `var` | `=`, `+=`, `-=`, `*=`, `/=`, `%=` |
+| Присваивание имени, объявленному через `let mut` | `=`, `+=`, `-=`, `*=`, `/=`, `%=` |
 | Соединение строк | `+` |
 
 `*`, `/`, `%` выполняются раньше `+` и `-`; скобки позволяют явно задать порядок.
@@ -308,8 +307,8 @@ def main() {
 use <std>
 
 def main() {
-    const age = 20
-    const hasTicket = true
+    let age = 20
+    let hasTicket = true
     if age >= 18 && hasTicket {
         std::println("Вход разрешён")
     } else if age < 18 {
@@ -337,9 +336,7 @@ def main() {
 
 `if` используется как оператор управления, а не как выражение для присваивания
 результата. Для выбора значения можно написать функцию с `return` или `case`.
-Сравнение целых и логических значений работает; строки удобно сравнивать через
-`strings::equals`. Структурное `==` для списков, структур, кортежей и ADT
-пока не реализовано.
+Сравнивайте целые и логические значения через `==`, а строки через `strings::equals`.
 
 ## Функции
 
@@ -401,7 +398,7 @@ def main() {
 use <std>
 
 def main() {
-    var count = 0
+    let mut count = 0
     while count < 3 {
         std::println(count)
         count += 1
@@ -426,7 +423,7 @@ def main() {
 use <std>
 
 def main() {
-    var total = 0
+    let mut total = 0
     for value : [2, 4, 6] {
         total += value
     }
@@ -464,10 +461,10 @@ b
 use <std>
 
 def main() {
-    const original = [1, 2]
-    const extended = std::append(original, 3)
-    const joined = std::concat(extended, [4, 5])
-    const empty: int[] = []
+    let original = [1, 2]
+    let extended = std::append(original, 3)
+    let joined = std::concat(extended, [4, 5])
+    let empty: int[] = []
     std::println(original)
     std::println(extended)
     std::println(joined)
@@ -489,13 +486,13 @@ def main() {
 исходного списка нет; компилятор предлагает перейти на неизменяемый API.
 
 Для пустого `[]` нужен контекст, из которого известен тип элементов:
-аннотация `const xs: int[] = []`, аргумент функции или явная специализация.
-Запись `const xs = []` без такого контекста не подходит. Старая форма пустого
+аннотация `let xs: int[] = []`, аргумент функции или явная специализация.
+Запись `let xs = []` без такого контекста не подходит. Старая форма пустого
 значения `int[]` не рекомендуется; `int[]` в новом коде — прежде всего запись типа.
 
 Готовые списки инвариантны: `int[]` нельзя передать как `float[]` или `any[]`.
 Отдельный литерал может получить ожидаемый тип `float[]` и расширить элементы
-при создании: `const xs: float[] = [1, 2]`.
+при создании: `let xs: float[] = [1, 2]`.
 
 ## Option: значение может отсутствовать
 
@@ -515,11 +512,11 @@ def valueOr(value: Option[int], fallback: int): int {
 }
 
 def main() {
-    const numbers = [10, 20]
+    let numbers = [10, 20]
     std::println(valueOr(numbers[0], -1))
     std::println(valueOr(numbers[2], -1))
     std::println(valueOr(std::get(numbers, -1), -1))
-    const absent: Option[int] = Option::None
+    let absent: Option[int] = Option::None
     std::println(valueOr(absent, 99))
 }
 ```
@@ -544,7 +541,7 @@ def main() {
 
 `None` без данных не вызывают как функцию: пишите `Option::None`, а не
 `Option::None()`. Если нет ожидаемого типа, укажите его явно:
-`const absent = Option[int]::None`.
+`let absent = Option[int]::None`.
 
 ### Безопасное обновление
 
@@ -556,8 +553,8 @@ def main() {
 use <std>
 
 def main() {
-    const before = [1, 2, 3]
-    const result = std::updated(before, 1, 20)
+    let before = [1, 2, 3]
+    let result = std::updated(before, 1, 20)
     case result {
         Option::Some(after) => std::println(after),
         Option::None => std::println("Индекс за границами"),
@@ -592,10 +589,10 @@ def main() {
 use <std>
 
 def main() {
-    const source = [1, 2, 3, 4]
-    const doubled = std::map(source, lambda (value) { return value * 2 })
-    const selected = std::filter(doubled, lambda (value) { return value > 4 })
-    const total = std::fold(selected, 0, lambda (sum, value) { return sum + value })
+    let source = [1, 2, 3, 4]
+    let doubled = std::map(source, lambda (value) { return value * 2 })
+    let selected = std::filter(doubled, lambda (value) { return value > 4 })
+    let total = std::fold(selected, 0, lambda (sum, value) { return sum + value })
     std::println(source)
     std::println(doubled)
     std::println(selected)
@@ -649,8 +646,8 @@ def moveRight(point: Point): Point {
 }
 
 def main() {
-    const original = Point(2, 5)
-    const moved = moveRight(original)
+    let original = Point(2, 5)
+    let moved = moveRight(original)
     std::println(original.x)
     std::println(moved.x)
     std::println(moved.y)
@@ -669,7 +666,7 @@ def main() {
 `point.x` читает поле. `with` создаёт новое значение, заменяя перечисленные поля
 и сохраняя остальные. База вычисляется один раз, новые значения — по порядку записи.
 
-Запись `point.x = 10` запрещена, в том числе если `point` объявлен через `var`.
+Запись `point.x = 10` запрещена, в том числе если `point` объявлен через `let mut`.
 При необходимости перепривяжите имя: `point = point with { x = 10 }`.
 
 Структура подходит для данных, которые существуют одновременно: у точки есть
@@ -690,14 +687,14 @@ def describe(): (int, string) {
 }
 
 def main() {
-    const pair = describe()
+    let pair = describe()
     case pair {
         (count, label) => {
             std::println(count)
             std::println(label)
         },
     }
-    const single = (42,)
+    let single = (42,)
     std::println(case single { (value,) => value, })
 }
 ```
@@ -776,7 +773,7 @@ def evaluate(expression: Expr): int {
 }
 
 def main() {
-    const expression = Expr::Add(Expr::Number(2), Expr::Number(3))
+    let expression = Expr::Add(Expr::Number(2), Expr::Number(3))
     std::println(evaluate(expression))
 }
 ```
@@ -831,11 +828,11 @@ def firstOrZero(values: int[]): int {
 }
 
 def main() {
-    const point = Point(4, 5)
+    let point = Point(4, 5)
     std::println(case point { Point { x: x, y: y } => x + y, })
     std::println(firstOrZero([7, 8]))
     std::println(firstOrZero([]))
-    const value: Result[Option[int], string] = Result::Ok(Option::Some(12))
+    let value: Result[Option[int], string] = Result::Ok(Option::Some(12))
     std::println(case value {
         Result::Ok(Option::Some(number)) => number,
         Result::Ok(Option::None) => 0,
@@ -909,7 +906,7 @@ Guard не гарантирует покрытие: после `Some(x) if x > 0
 use <std>
 
 def doubleOrZero(value: Option[int]): int {
-    const result = case value {
+    let result = case value {
         Option::Some(number) => {
             std::println("Вычисляем")
             number * 2
@@ -975,9 +972,8 @@ def main() {
 Нельзя делить на ноль
 ```
 
-`Option` подходит, когда важно только наличие значения; `Result` — когда нужно
-объяснить неуспех. Никакое автоматическое распространение ошибки через `?`
-пока не предусмотрено: используйте `case`.
+`Option` подходит, когда важно только наличие значения. `Result` позволяет передать
+причину ошибки. Обрабатывайте варианты `Result` с помощью `case`.
 
 `std::panic("сообщение")` предназначен для аварийного завершения, а не для
 обычного ожидаемого отказа. Если отсутствие данных — нормальная ситуация,
@@ -1005,9 +1001,9 @@ def wrap[T](value: T): Option[T] {
 }
 
 def main() {
-    const box: Box[int] = Box(42)
-    const name: UserName = identity("Аня")
-    const pair: Pair[int, string] = (box.value, name)
+    let box: Box[int] = Box(42)
+    let name: UserName = identity("Аня")
+    let pair: Pair[int, string] = (box.value, name)
     std::println(identity[int](box.value))
     case pair { (number, text) => std::println(text), }
     std::println(case wrap(7) { Option::Some(value) => value, Option::None => 0, })
@@ -1051,8 +1047,8 @@ def applyTwice(value: int, f: (int) => int): int {
 }
 
 def main() {
-    const increment: (int) => int = lambda (value) { return value + 1 }
-    const double = lambda (value: int): int { return value * 2 }
+    let increment: (int) => int = lambda (value) { return value + 1 }
+    let double = lambda (value: int): int { return value * 2 }
     std::println(applyTwice(3, increment))
     std::println(double(4))
     std::println(std::map([1, 2], increment))
@@ -1082,8 +1078,8 @@ def main() {
 use <std>
 
 def main() {
-    var number = 1
-    const read: () => int = lambda () { return number }
+    let mut number = 1
+    let read: () => int = lambda () { return number }
     number = 2
     std::println(number)
     std::println(read())
@@ -1098,7 +1094,7 @@ def main() {
 ```
 
 Менять захваченное имя внутри лямбды нельзя. Если нужен локальный счётчик самой
-лямбды, объявите в её теле собственный `var`. Это правило помогает читать
+лямбды, объявите его через `let mut` в её теле. Это правило помогает читать
 преобразования списков: результат не зависит от незаметного изменения захваченных
 привязок в процессе обхода.
 
@@ -1124,7 +1120,7 @@ def describe(value: Label): string {
 def main() {
     std::println(describe(42))
     std::println(describe("Готово"))
-    const hidden: any = Option::Some(5)
+    let hidden: any = Option::Some(5)
     std::println(case hidden {
         Option[int] value => case value { Option::Some(x) => x, Option::None => 0, },
         _ => -1,
@@ -1177,8 +1173,8 @@ use <std>
 use <domain/pricing>
 
 def main() {
-    const price: pricing::Price = pricing::Price(10)
-    const result = pricing::addTax(price)
+    let price: pricing::Price = pricing::Price(10)
+    let result = pricing::addTax(price)
     std::println(result.amount)
 }
 ```
@@ -1266,8 +1262,7 @@ true
 | `urlEncode` | `value: string` | Кодированная строка |
 
 Например, вызов имеет вид `http::get("https://example.com")`.
-Текущее имя функции статуса — `status`, а не `requestStatus` из старого руководства.
-Модуль пока не оборачивает сетевые исключения в `Result` автоматически.
+Сетевые ошибки приводят к исключению.
 
 ### Async: фоновые действия
 
@@ -1329,11 +1324,11 @@ def firstTitle(tasks: Task[]): Option[string] {
 }
 
 def main() {
-    const tasks = [
-        Task("Изучить const", Status::Done),
+    let tasks = [
+        Task("Изучить let", Status::Done),
         Task("Разобраться с case", Status::Open)
     ]
-    const completed = std::map(tasks, lambda (task) { return complete(task) })
+    let completed = std::map(tasks, lambda (task) { return complete(task) })
     std::println(countDone(tasks))
     std::println(countDone(completed))
     std::println(std::len(std::filter(tasks, lambda (task) { return isDone(task) })))
@@ -1350,7 +1345,7 @@ def main() {
 1
 2
 1
-Изучить const
+Изучить let
 ```
 
 Обратите внимание на `tasks` и `completed`: старые данные остались доступными.
@@ -1359,20 +1354,19 @@ def main() {
 
 ## Частые ошибки
 
-### «Нельзя присвоить const»
+### Переприсваивание неизменяемой привязки
 
-Если нужно переприсваивание, используйте локальный `var`. Для коллекции или
-структуры создавайте новое значение: замена `const` на `var` не разрешает запись
-в поле или индекс.
+Если нужно переприсваивание, объявите локальную привязку через `let mut`.
+Чтобы обновить поле структуры или элемент списка, создайте новое значение.
 
 ### «Не удаётся вывести тип»
 
 Частые причины — пустой список и вариант без данных. Добавьте контекст:
 
 ```text
-const values: int[] = []
-const absent: Option[int] = Option::None
-const another = Option[string]::None
+let values: int[] = []
+let absent: Option[int] = Option::None
+let another = Option[string]::None
 ```
 
 Не заменяйте неизвестный тип на `any` автоматически: так легко потерять полезные
@@ -1423,32 +1417,13 @@ const another = Option[string]::None
 
 ## Ограничения текущей версии
 
-Реализованы JVM- и Java-исполнение нового ядра, неизменяемые произведения и списки,
-generic/рекурсивные ADT, `Option`/`Result`, вложенные шаблоны, guards и проверка полноты.
-При этом работа над целевой редакцией продолжается:
-
-- Структурное равенство и хеширование данных ещё не реализованы. Не используйте
-  `==` для структур, ADT, кортежей и списков; извлекайте нужные поля и сравнивайте их.
-- Полная инициализация верхнеуровневых `const` ещё не завершена. Держите рабочие
-  значения внутри функций.
-- Универсальные адаптеры nullable/изменяемых JVM-объектов и внешних ресурсов
-  остаются в плане. Гарантии новых списков не распространяются на произвольный
-  внешний объект, который можно получить из старого native API.
+- Чтобы сравнить структуры, ADT, кортежи или списки, извлеките нужные поля
+  или элементы и сравните их по отдельности.
 - Различающее сопоставление потенциально совпадающих generic-unions ограничено
   диагностикой `pattern.overlapping_generic_union`.
-- У Java-генератора остаётся ограничение некоторых `case`-блоков: возврат имени
-  локальной константы, объявленной в этом же блоке, последним выражением может
-  привести к ошибке сгенерированного Java. До исправления вычисляйте итоговое
-  выражение напрямую, как в примере блока ветви выше.
-- Часть старого синтаксиса ещё принимается для миграции. Новому коду стоит следовать
-  формам из этого руководства. Диапазоны `..` и возведение в степень `**` из целевой
-  спецификации не входят в проверенный набор операций этого учебника.
-- Нет обещания полноценной поддержки Go, оптимизации хвостовой рекурсии,
-  автоматического `?`, классов типов, GADT, изменяемых builders, Map/Set и
-  гарантированной сложности persistent-коллекций.
-
-Полное текущее состояние фиксируется в [статусе реализации](../spec/implementation-status.md).
-Этот раздел помогает выбрать доступную конструкцию, пока язык развивается.
+- При генерации Java вычисляйте итоговое выражение ветви `case` напрямую,
+  как в примере выше. Возврат локальной привязки из блока этой ветви может
+  привести к ошибке компиляции Java.
 
 ## Упражнения и памятка
 
@@ -1471,8 +1446,8 @@ generic/рекурсивные ADT, `Option`/`Result`, вложенные шаб
 
 | Задача | Форма |
 | --- | --- |
-| Сохранить значение | `const name = value` |
-| Переприсваивать локальное имя | `var count = 0` |
+| Сохранить значение | `let name = value` |
+| Переприсваивать локальное имя | `let mut count = 0` |
 | Объявить функцию | `def f(value: int): int { return value }` |
 | Объявить структуру | `type Point = struct { x: int, y: int }` |
 | Обновить структуру | `point with { x = 10 }` |
@@ -1483,6 +1458,3 @@ generic/рекурсивные ADT, `Option`/`Result`, вложенные шаб
 | Вернуть функцию как значение | `lambda (x: int): int { return x + 1 }` |
 | Подключить модуль | `use <domain/pricing>` |
 | Экспортировать объявление | `pub def ...`, `pub type ...` |
-
-Для дальнейшего чтения: [ADT и сопоставление](adt.ru.md),
-[подробности списков](lists.ru.md), [целевая спецификация](../spec/specification.ru.md).

@@ -2,7 +2,6 @@
 
 **Edition:** Ixion Core 1.0, normative draft dated 19 October 2026.
 **Russian version:** [Русский](specification.ru.md).
-**Compiler status:** [implementation conformance](implementation-status.md).
 
 ## Contents
 
@@ -39,11 +38,6 @@ Ixion is a statically typed language with immutable data values, locally mutable
 bindings, functions, and closed algebraic data types. This document defines the
 source language, static validity, evaluation, the required `std` module, and the
 boundary with the external environment.
-
-This is a self-contained contract for the **target Core 1.0 edition**, not a list
-of changes or a claim that every existing compiler build already implements every
-rule. Compiler conformance is documented separately. Installation syntax, CLI,
-IDE project formats, and generated class naming are outside the language.
 
 ### 1.2. Normative terms
 
@@ -113,8 +107,8 @@ Comments separate tokens: `a/*x*/b` is two identifiers, not `ab`.
 ### 3.4. Keywords and delimiters
 
 ```text
-case const def else enum false for if lambda never new pub return
-struct true type use var while with
+case def else enum false for if lambda let mut never new pub return
+struct true type use while with
 ```
 
 `new` is reserved but has no Core 1.0 syntactic construct.
@@ -196,7 +190,7 @@ There are no source-language `null`, `undefined`, or values of type `never`.
 ### 5.1. Identity and imports
 
 A module contains imports, type declarations, function declarations, and module
-`const` declarations. Its identity is its canonical project-root-relative path
+`let` declarations. Its identity is its canonical project-root-relative path
 without `.ix`. `use <a/b>` resolves to `a/b.ix` and introduces qualifier `b`.
 Path components are identifiers; `.` and `..` import path components are forbidden.
 The execution environment supplies a project root fixed for the compilation.
@@ -214,7 +208,7 @@ inside a nested generic type or functional signature.
 
 ### 5.2. Exports
 
-`pub` is allowed only on top-level `def`, `type`, and `const` declarations.
+`pub` is allowed only on top-level `def`, `type`, and `let` declarations.
 Without `pub`, a declaration is available only in its own module. Exporting a
 structure exposes its type, constructor, and all fields. Exporting an `enum`
 exposes its type and all variants with their fields. Private fields, hidden variants,
@@ -225,13 +219,13 @@ but does not introduce a constructor value.
 
 Before calling `main`, modules are initialized by visiting imports in source order:
 an unvisited module is marked “initializing”, its imports are visited, and its
-`const` initializers are then evaluated in declaration order. Re-entering an
+`let` initializers are then evaluated in declaration order. Re-entering an
 initializing module does not initialize it again. A completed module is marked
 “initialized”. Each initializer runs exactly once.
 
 Type and function declarations have no evaluation effect and are available before
-constant initialization. An initializer's direct reference to a later `const` in
-its own module is an error. An indirect read of an uninitialized `const` through
+binding initialization. An initializer's direct reference to a later binding in
+its own module is an error. An indirect read of an uninitialized binding through
 a function or an import cycle produces an initialization fault. It neither returns
 a default value nor triggers lazy re-initialization. A fault stops program execution.
 Initialization MUST NOT depend on filesystem enumeration order.
@@ -366,7 +360,7 @@ int[] ↛ float[]         // no container conversion
 There is no implicit component conversion of an existing list, tuple, structure,
 sum, or function. `Box[int] ↛ Box[any]`; `(int) => int` does not become
 `(int) => float`. An expected type may guide **construction** of a literal or lambda:
-`const xs: float[] = [1, 2]` widens elements before inserting them. This does not
+`let xs: float[] = [1, 2]` widens elements before inserting them. This does not
 permit reinterpreting an existing `int[]`.
 
 ### 8.3. Common result types
@@ -498,14 +492,14 @@ user-defined `def` overloading.
 
 ## 11. Bindings and immutability
 
-`const x [: T] = e` binds the evaluated value to an immutable name.
-`var x [: T] = e` permits local reassignment. An initializer is required; `const`
-does not imply compile-time evaluation. Without an annotation, the initializer
-determines the type, which does not subsequently change on reassignment.
+`let x [: T] = e` binds the evaluated value to an immutable name.
+`let mut x [: T] = e` permits local reassignment. Both forms require an initializer,
+which may run at runtime. Without an annotation, the initializer determines the
+type of the binding for all subsequent assignments.
 
-`var` is allowed only in a function, lambda, or nested block thereof. Parameters,
+`let mut` is allowed only in a function, lambda, or nested block thereof. Parameters,
 `for` variables, pattern names, and captured values are always immutable.
-Assignment can target only an accessible local `var` name. Structure fields,
+Assignment can target only an accessible name declared with `let mut`. Structure fields,
 variant payloads, tuple components, list elements, and list length do not change
 after construction. Iteration, aliasing, and function passing provide no additional
 mutation path. Immutability is transitive for language data.
@@ -553,10 +547,10 @@ whose body may complete normally MUST be exactly `unit` (§15.4).
 
 Free local values are captured when the lambda is created, left to right in order
 of first free-name occurrence in its text. Capture takes the current value,
-including an outer `var` value; it does not retain a reference to that variable's
+including the value of an outer mutable binding; it does not retain a reference to that variable's
 mutable cell. The captured name is immutable inside the lambda. Outer reassignment
 does not change an existing closure. Module functions and types do not create local
-captures; module constants are read under the initialization rules.
+captures; module bindings are read under the initialization rules.
 
 Lambda arity is not limited to four. Platform resources may limit arity and stack
 size, but implementation limits MUST be published and excess diagnosed.
@@ -691,7 +685,7 @@ has type `bool`. A `return` or fault prevents another test.
 `for name : expression { ... }` requires `T[]` or `string`. The iterable expression
 evaluates exactly once. A list is traversed in index order; a string in UTF-16 code
 units of type `char`. Each iteration creates a new immutable binding. An empty
-sequence does not execute the body. Reassigning the original `var` does not change
+sequence does not execute the body. Reassigning the original binding does not change
 the sequence being traversed. This also defines lambda capture of the loop name:
 the element of that iteration is captured.
 
@@ -1019,7 +1013,7 @@ syntax. Their names are exported through ordinary modules. Reflecting a Java
 signature alone does not establish a correct Ixion signature.
 
 A resource is a value with externally mutable state. It may be held in a local
-binding and passed to profile operations, but not stored in a module `const`,
+binding and passed to profile operations, but not stored in a module binding,
 structure, ADT, tuple, or list. A closure capturing a resource is also resource-bearing.
 Packing it in `any` does not remove that property.
 
@@ -1066,13 +1060,13 @@ specific Kotlin/Java exception class names.
 | `type.inference` | Unresolved/ambiguous inference, context-free empty literal |
 | `type.alias_cycle`, `type.negative_recursion` | Forbidden recursion |
 | `call.arity`, `call.not_callable` | Invalid invocation |
-| `mutation.immutable`, `mutation.target` | Updating const/parameter/capture, field/index writes |
+| `mutation.immutable`, `mutation.target` | Reassigning an immutable binding, field/index writes |
 | `operator.invalid` | Operation undefined for operand types |
 | `pattern.invalid`, `pattern.ambiguous` | Invalid field/variant/arity/binding/pattern inference |
 | `match.non_exhaustive`, `match.unreachable` | Incomplete matching or unreachable branch |
 | `match.indeterminate` | Coverage unproven within declared budget |
 | `return.invalid`, `return.missing` | Return outside a function, wrong result, missing result path |
-| `initialization.forward` | Direct reference to a later module const |
+| `initialization.forward` | Direct reference to a later module binding |
 | `resource.escape` | A resource may enter immutable data |
 
 A diagnostic identifies the module, category, and a nonempty source span; EOF errors
@@ -1125,7 +1119,7 @@ statement in a branch block is classified as its result after parsing the statem
 ```ebnf
 module              = { use_decl | declaration } EOF ;
 use_decl            = "use" "<" IDENT { "/" IDENT } ">" ;
-declaration         = [ "pub" ] ( type_decl | function_decl | const_decl ) ;
+declaration         = [ "pub" ] ( type_decl | function_decl | module_binding_decl ) ;
 
 type_decl           = "type" IDENT [ type_parameters ] "=" type_definition ;
 type_definition     = struct_definition | enum_definition | type_expr ;
@@ -1137,8 +1131,9 @@ enum_definition     = "enum" "{" variant { "," variant } [ "," ] "}" ;
 variant             = IDENT [ "(" fields ")" ] ;
 function_decl       = "def" IDENT [ type_parameters ] "(" [ fields ] ")"
                       [ ":" type_expr ] block ;
-const_decl          = "const" IDENT [ ":" type_expr ] "=" expression ;
-var_decl            = "var" IDENT [ ":" type_expr ] "=" expression ;
+module_binding_decl = "let" binding ;
+binding_decl        = "let" [ "mut" ] binding ;
+binding             = IDENT [ ":" type_expr ] "=" expression ;
 
 type_expr           = function_type | union_type ;
 function_type       = "(" [ type_items ] ")" "=>" type_expr ;
@@ -1151,7 +1146,7 @@ type_arguments      = "[" type_items "]" ;
 type_items          = type_expr { "," type_expr } [ "," ] ;
 
 block               = "{" { statement } "}" ;
-statement           = const_decl | var_decl | assignment | return_stmt
+statement           = binding_decl | assignment | return_stmt
                     | if_stmt | while_stmt | for_stmt | block | expression ;
 assignment          = IDENT assign_op expression | IDENT ( "++" | "--" ) ;
 assign_op           = "=" | "+=" | "-=" | "*=" | "/=" | "%=" ;
@@ -1244,8 +1239,3 @@ and polymorphic recursion; evaluation order; early returns; snapshot captures;
 immutability and foreign aliasing; every pattern form, guards, exhaustiveness,
 unreachability, and uninhabited types; structural equality with NaN/signed zero;
 module initialization and the native boundary.
-
-Examples and tutorials do not replace normative rules. A discrepancy between the
-current compiler and this document is recorded in the
-[implementation status](implementation-status.md), rather than becoming an implicit
-exception to the specification.

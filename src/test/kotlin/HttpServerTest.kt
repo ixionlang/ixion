@@ -58,10 +58,12 @@ class HttpServerTest {
         }
         Files.createDirectories(root.resolve("examples"))
         val port = ServerSocket(0, 50, InetAddress.getByName("127.0.0.1")).use { it.localPort }
+        val concurrentRequests = 12
         val source = Files.readString(Path.of("examples/server.ix"))
             .replace("use <std>", "use <std>\nuse <strings>")
+            // queueCapacity also sets the TCP backlog. Allow the whole burst to connect.
             .replace("types::config(\"127.0.0.1\", 8080)",
-                "types::ServerConfig(\"127.0.0.1\", $port, 32, 2, 4, 0)")
+                "types::ServerConfig(\"127.0.0.1\", $port, 32, 2, $concurrentRequests, 0)")
             .replace("request.body) })", "request.body) })," + extraRoutes)
         Files.writeString(root.resolve("examples/server.ix"), source)
         val api = IxApi()
@@ -165,7 +167,7 @@ class HttpServerTest {
                     assertEquals(listOf("one", "two"), inspect.headers().allValues("X-tag"))
                     assertEquals("hello world", inspect.headers().firstValue("X-greeting").orElseThrow())
                     assertTrue(inspect.body().contains("first;second;"), inspect.body())
-                    val pending = (1..12).map { client.sendAsync(HttpRequest.newBuilder(URI("$base/health"))
+                    val pending = (1..concurrentRequests).map { client.sendAsync(HttpRequest.newBuilder(URI("$base/health"))
                         .timeout(Duration.ofSeconds(5)).build(), HttpResponse.BodyHandlers.ofString()) }
                     CompletableFuture.allOf(*pending.toTypedArray()).get(10, TimeUnit.SECONDS)
                     pending.forEach { assertEquals("ok", it.join().body()) }
@@ -225,8 +227,8 @@ class HttpServerTest {
         router::route("GET", "/explicit", lambda (request) { return response::text(200, "GET") }),
         router::route("HEAD", "/explicit", lambda (request) { return types::Response(200, [types::Header("X-Handler", "explicit")], "HEAD") }),
         router::route("GET", "/inspect", lambda (request) {
-            const headers = std::map(request.query, lambda (param) { return types::Header("X-" + param.name, param.value) })
-            const selected = std::filter(request.headers, lambda (header) { return strings::equals(strings::toLowerCase(header.name), "x-test") })
+            let headers = std::map(request.query, lambda (param) { return types::Header("X-" + param.name, param.value) })
+            let selected = std::filter(request.headers, lambda (header) { return strings::equals(strings::toLowerCase(header.name), "x-test") })
             return types::Response(200, headers, std::fold(selected, "", lambda (acc, header) { return acc + header.value + ";" }))
         })
     """.trimIndent()

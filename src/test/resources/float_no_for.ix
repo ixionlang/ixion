@@ -1,7 +1,7 @@
 use <std>
 
 pub def main(){
-    var list = [1.0, 2.0, 3.0]
-    var item = list[0]
+    let mut list = [1.0, 2.0, 3.0]
+    let mut item = list[0]
     std::println(item)
 }

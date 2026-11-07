@@ -1,6 +1,6 @@
 type Point = struct { x: int, y: int }
 
 def main() {
-    var value = Point(1, 2)
+    let mut value = Point(1, 2)
     value.x = 10
 }

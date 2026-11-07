@@ -124,11 +124,11 @@ class DataLanguageTest {
                 }
             }
             def main() {
-                const first: Result[Option[int], string] = Result::Ok(Option::Some(42))
+                let first: Result[Option[int], string] = Result::Ok(Option::Some(42))
                 std::println(describe(first))
                 std::println(describe(Result::Ok(Option::None)))
                 std::println(describe(Result::Err("failed")))
-                const absent = Option[int]::None
+                let absent = Option[int]::None
                 std::println(case absent { Option::Some(x) => x, Option::None => 7, })
             }
         """, "42\n0\n-1\n7")
@@ -139,7 +139,7 @@ class DataLanguageTest {
             def subject(): Option[int] { std::println("subject") return Option::Some(3) }
             def guard(value: int): bool { std::println(value) return false }
             def compute(): int {
-                const ignored = case subject() {
+                let ignored = case subject() {
                     Option::Some(value) if guard(value) => 1,
                     Option::Some(value) => { return value + 10 },
                     Option::None => 0,
@@ -173,14 +173,14 @@ class DataLanguageTest {
                 return case values { [] => 0, [first, ..rest] => first + std::len(rest), }
             }
             def main() {
-                const point = Point(1, 2)
-                const changed = point with { x = 10 }
+                let point = Point(1, 2)
+                let changed = point with { x = 10 }
                 std::println(case changed { Point { x: x, y: y } => x + y, })
                 std::println(point.x)
-                const box = Box[int](42)
+                let box = Box[int](42)
                 std::println(case box { Box { value: value } => value, })
                 std::println(box.value)
-                const pair: Pair[int, string] = (7, "seven")
+                let pair: Pair[int, string] = (7, "seven")
                 std::println(case pair { (number, _) => number, })
                 std::println(head([]))
                 std::println(head([5, 6, 7]))
@@ -211,9 +211,9 @@ class DataLanguageTest {
             use <std>
             def effect(): bool { std::println("unexpected") return true }
             def main() {
-                var total = 1
-                const flag = false && case true { true => effect(), false => false, }
-                const result = case true { true => { total = 5 total }, false => 0, }
+                let mut total = 1
+                let flag = false && case true { true => effect(), false => false, }
+                let result = case true { true => { total = 5 total }, false => 0, }
                 std::println(total)
                 std::println(result)
                 std::println(flag)
@@ -241,7 +241,7 @@ class DataLanguageTest {
                 }
             }
             def main() {
-                const tree: tree::Tree[int] = tree::Tree::Branch(tree::Tree::Leaf(1), tree::Tree::Leaf(2))
+                let tree: tree::Tree[int] = tree::Tree::Branch(tree::Tree::Leaf(1), tree::Tree::Leaf(2))
                 std::println(size(tree))
             }
         """, "2", mapOf("domain/tree" to """
@@ -254,15 +254,15 @@ class DataLanguageTest {
             type Handler = (int) => int
             def call(f: Handler): int { return f(3) }
             def main() {
-                var offset = 1
-                const captured: () => int = lambda () { return offset }
+                let mut offset = 1
+                let captured: () => int = lambda () { return offset }
                 offset = 9
                 std::println(captured())
-                const double: Handler = lambda (number) { return number * 2 }
+                let double: Handler = lambda (number) { return number * 2 }
                 std::println(call(double))
-                const many: (int, int, int, int, int) => int = lambda (a, b, c, d, e) { return a + b + c + d + e }
+                let many: (int, int, int, int, int) => int = lambda (a, b, c, d, e) { return a + b + c + d + e }
                 std::println(many(1, 2, 3, 4, 5))
-                const tagged: any = double
+                let tagged: any = double
                 std::println(case tagged { Handler function => function(4), _ => 0, })
             }
         """, "1\n6\n15\n8")
@@ -274,8 +274,8 @@ class DataLanguageTest {
                 return lambda (): Option[T] { return Option::Some(value) }
             }
             def main() {
-                const create = make(42)
-                const read: (Option[int]) => int = lambda (value) {
+                let create = make(42)
+                let read: (Option[int]) => int = lambda (value) {
                     return case value {
                         Option::Some(number) => { return number },
                         Option::None => 0,
@@ -290,14 +290,14 @@ class DataLanguageTest {
         reject("type Negative[T] = struct { consume: (T) => int } type Bad = enum { Wrap(value: Negative[Bad]), }", "negative recursive occurrence")
         reject("def f(value: Option[int, string]) {}", "expects 1 arguments")
         reject("def f(value: Option) {}", "expects 1 arguments")
-        reject("def f() { var n = 1 const bad = lambda (): int { n = 2 return n } }", "mutation.immutable_binding")
+        reject("def f() { let mut n = 1 let bad = lambda (): int { n = 2 return n } }", "mutation.immutable_binding")
     }
     @Test fun optimized_data_expressions_preserve_checked_match_plans() {
         execute("""
             use <std>
             def id[T](value: T): T { return value }
             def main() {
-                const value: Option[int] = Option::Some(id(1 + 2))
+                let value: Option[int] = Option::Some(id(1 + 2))
                 std::println(case value { Option::Some(number) => number, Option::None => 0, })
             }
         """, "3", optimize = true)
@@ -313,11 +313,11 @@ class DataLanguageTest {
             def main() {
                 std::println(id[float](1))
                 std::println(first(1, 2.0f))
-                const box = Box[float](3)
+                let box = Box[float](3)
                 std::println(box.value)
-                const after = box with { value = 4 }
+                let after = box with { value = 4 }
                 std::println(after.value)
-                const option = wrap[float](5)
+                let option = wrap[float](5)
                 std::println(case option { Option::Some(value) => value, Option::None => 0.0f, })
             }
         """, "1.0\n1.0\n3.0\n4.0\n5.0")
@@ -331,20 +331,38 @@ class DataLanguageTest {
                 return case value { true => 42, false => fail(), }
             }
             def main() {
-                const value: Option[unit] = Option::Some(nothing())
+                let value: Option[unit] = Option::Some(nothing())
                 std::println(case value { Option::Some(()) => "unit", Option::None => "none", })
-                const callback: () => unit = lambda () { return () }
+                let callback: () => unit = lambda () { return () }
                 std::println(callback())
                 std::println(choose(true))
             }
         """, "unit\n()\n42")
         reject("use <std> def main() { std::panic(1) }", "call.argument_type")
     }
+    @Test fun let_declarations_and_local_reassignment() {
+        execute("""
+            use <std>
+            def main() {
+                let step = 1 + 2
+                let mut total: int = 2 + 3
+                total += step
+                total++
+                std::println(total)
+            }
+        """, "9", optimize = true)
+        reject("def main() { let value = 1 value = 2 }", "MutabilityException")
+        reject("let mut value = 1", "mutation.module_var")
+        reject("pub let mut value = 1", "mutation.module_var")
+        reject("def main() { const value = 1 }", "name.unknown: const")
+        reject("def main() { var value = 1 }", "name.unknown: var")
+    }
+
     @Test fun immutable_product_and_append_conformance() {
         execute(Files.readString(Path.of("src/test/resources/conformance/valid/immutable-update.ix")), "1\n10")
         execute(Files.readString(Path.of("src/test/resources/conformance/valid/list-aliasing.ix")), "2\n3")
         reject(Files.readString(Path.of("src/test/resources/conformance/invalid/field-assignment.ix")), "mutation.field")
-        reject("use <std> def main() { const values = [1] std::push(values, 2) }", "list.immutable")
+        reject("use <std> def main() { let values = [1] std::push(values, 2) }", "list.immutable")
     }
 
     @Test fun generic_union_tags_are_canonical_inside_adt_values() {
@@ -352,7 +370,7 @@ class DataLanguageTest {
             use <std>
             def make[T](value: T): Option[T | string] { return Option::Some(value) }
             def main() {
-                const value = make(42)
+                let value = make(42)
                 std::println(case value {
                     Option::Some(int number) => number,
                     Option::Some(string text) => 0,
@@ -367,22 +385,22 @@ class DataLanguageTest {
         execute("""
             use <std>
             def main() {
-                var number = 7
-                const result = case Option::Some(42) {
+                let mut number = 7
+                let result = case Option::Some(42) {
                     Option::Some(number) => {
-                        if number > 0 { const local = 1 std::println(local) }
-                        else { const local = 2 std::println(local) }
+                        if number > 0 { let local = 1 std::println(local) }
+                        else { let local = 2 std::println(local) }
                         number
                     },
                     Option::None => 0,
                 }
                 std::println(result)
                 std::println(number)
-                const one: (int,) = (8,)
+                let one: (int,) = (8,)
                 std::println(case one { (value,) => value, })
             }
         """, "1\n42\n7\n8")
-        reject("def main() { if true { const inner = 1 } const outside = inner }", "name.unknown")
+        reject("def main() { if true { let inner = 1 } let outside = inner }", "name.unknown")
     }
     @Test fun functional_updates_evaluate_base_and_fields_once_in_source_order() {
         execute("""
@@ -391,7 +409,7 @@ class DataLanguageTest {
             def base(): Point { std::println("base") return Point(1, 2) }
             def field(value: int): int { std::println(value) return value }
             def main() {
-                const result = base() with { y = field(20), x = field(10) }
+                let result = base() with { y = field(20), x = field(10) }
                 std::println(case result { Point { x: x, y: y } => x + y, })
             }
         """, "base\n20\n10\n30")
@@ -407,12 +425,12 @@ class DataLanguageTest {
                 std::println(case Direction::North { Direction::North => 1, Direction::South => 2, })
                 std::println(case 'x' { 'x' => 3, _ => 0, })
                 std::println(case "a\nb" { "a\nb" => 4, _ => 0, })
-                const numbers: any = [1, 2]
+                let numbers: any = [1, 2]
                 std::println(case numbers { int[] values => std::len(values), _ => 0, })
-                const function: any = lambda (number: int): int { return number + 1 }
+                let function: any = lambda (number: int): int { return number + 1 }
                 std::println(case function { (int) => int call => call(4), _ => 0, })
                 std::println(value(7))
-                const negative = (-8,)
+                let negative = (-8,)
                 std::println(case negative { (number,) => number, })
             }
         """, "1\n3\n4\n2\n5\n7\n-8")
@@ -436,10 +454,10 @@ class DataLanguageTest {
                 case value { Option::Some(number) => { return number }, Option::None => { return 0 }, }
             }
             def main() {
-                const callback: (Option[int]) => int = lambda (value) {
+                let callback: (Option[int]) => int = lambda (value) {
                     case value { Option::Some(number) => { return number }, Option::None => { return 0 }, }
                 }
-                const unit: (unit) => unit = lambda (value) { return value }
+                let unit: (unit) => unit = lambda (value) { return value }
                 std::println(number(Option::Some(42)))
                 std::println(callback(Option[int]::None))
                 std::println(unit(()))
@@ -450,8 +468,8 @@ class DataLanguageTest {
         execute("""
             use <std>
             def main() {
-                var total = 0
-                const value = case true {
+                let mut total = 0
+                let value = case true {
                     true => { while false { total = 100 } for item : [1, 2, 3] { total += item } total },
                     false => 0,
                 }
@@ -490,14 +508,14 @@ class DataLanguageTest {
                 return case value { Option::Some(x) => x, Option::None => -1, }
             }
             def main() {
-                const xs = [10, 20]
+                let xs = [10, 20]
                 std::println(read(xs[0]))
                 std::println(read(xs[1]))
                 std::println(read(xs[-1]))
                 std::println(read(xs[2]))
                 std::println(read(xs[2147483647]))
                 std::println(read(std::get(xs, 0)))
-                const empty: int[] = []
+                let empty: int[] = []
                 std::println(read(empty[0]))
                 std::println(case std::updated(xs, 1, 42) {
                     Option::Some(ys) => case ys[1] { Option::Some(x) => x, Option::None => -1, },
@@ -514,11 +532,11 @@ class DataLanguageTest {
         execute("""
             use <std>
             def main() {
-                const xs = [1, 2, 3]
-                const joined = std::concat(xs, [4])
-                const mapped = std::map(joined, lambda (x) { return x * 2 })
-                const filtered = std::filter(mapped, lambda (x) { return x > 4 })
-                const total = std::fold(filtered, 10, lambda (sum, x) { return sum + x })
+                let xs = [1, 2, 3]
+                let joined = std::concat(xs, [4])
+                let mapped = std::map(joined, lambda (x) { return x * 2 })
+                let filtered = std::filter(mapped, lambda (x) { return x > 4 })
+                let total = std::fold(filtered, 10, lambda (sum, x) { return sum + x })
                 std::println(xs)
                 std::println(joined)
                 std::println(mapped)
@@ -535,11 +553,11 @@ class DataLanguageTest {
         execute("""
             use <std>
             def main() {
-                const xs = [1, 2, 3]
+                let xs = [1, 2, 3]
                 std::println(std::map(xs, lambda (x) { std::println(x) return x + 1 }))
                 std::println(std::filter(xs, lambda (x) { std::println(x) return x > 1 }))
                 std::println(std::fold(xs, 0, lambda (sum, x) { std::println(x) return sum * 10 + x }))
-                const empty: int[] = []
+                let empty: int[] = []
                 std::println(std::map(empty, lambda (x) { std::println("unexpected") return x }))
                 std::println(std::filter(empty, lambda (x) { std::println("unexpected") return true }))
                 std::println(std::fold(empty, 42, lambda (sum, x) { std::println("unexpected") return sum + x }))
@@ -557,19 +575,19 @@ class DataLanguageTest {
             }
             def first[T](values: T[]): Option[T] { return values[0] }
             def main() {
-                const xs = wrap([7])
+                let xs = wrap([7])
                 std::println(case first(xs) { Option::Some(Option::Some(x)) => x, _ => 0, })
-                const empty: int[] = []
-                const strings = std::map(empty, lambda (x) { return "text" })
-                const opaque: any = strings
+                let empty: int[] = []
+                let strings = std::map(empty, lambda (x) { return "text" })
+                let opaque: any = strings
                 std::println(case opaque { string[] s => std::len(s), _ => -1, })
-                const absent: any = strings[0]
+                let absent: any = strings[0]
                 std::println(case absent { Option[string] value => true, _ => false, })
-                const nested = std::map([1, 2], lambda (x) { return [x] })
+                let nested = std::map([1, 2], lambda (x) { return [x] })
                 std::println(case nested[1] { Option::Some([x]) => x, _ => 0, })
-                const widened = std::map[int, float]([1], lambda (x) { return x })
+                let widened = std::map[int, float]([1], lambda (x) { return x })
                 std::println(case widened[0] { Option::Some(x) => x, Option::None => 0.0f, })
-                const changed: any = std::updated(widened, 0, 3)
+                let changed: any = std::updated(widened, 0, 3)
                 std::println(case changed { Option[float[]] value => true, _ => false, })
             }
         """, "7\n0\ntrue\n2\n1.0\ntrue")
@@ -579,9 +597,9 @@ class DataLanguageTest {
         execute("""
             use <std>
             def main() {
-                var xs = [1, 2]
-                const saved = xs
-                const read = lambda () { return xs }
+                let mut xs = [1, 2]
+                let saved = xs
+                let read = lambda () { return xs }
                 for x : xs {
                     xs = std::append(xs, x + 10)
                     std::println(x)
@@ -612,29 +630,29 @@ class DataLanguageTest {
         execute("""
             use <std>
             def main() {
-                const joined: int[] = std::concat([], [])
-                const absent: Option[int] = std::get([], 0)
-                const indexed: Option[int] = [][0]
-                const mapped = std::map([], lambda (x: int) { return x + 1 })
-                const filtered = std::filter([], lambda (x: int) { return x > 0 })
-                const total = std::fold([], 7, lambda (sum: int, x: int) { return sum + x })
-                const mapper: (int) => int = lambda (x) { return x * 3 }
+                let joined: int[] = std::concat([], [])
+                let absent: Option[int] = std::get([], 0)
+                let indexed: Option[int] = [][0]
+                let mapped = std::map([], lambda (x: int) { return x + 1 })
+                let filtered = std::filter([], lambda (x: int) { return x > 0 })
+                let total = std::fold([], 7, lambda (sum: int, x: int) { return sum + x })
+                let mapper: (int) => int = lambda (x) { return x * 3 }
                 std::println(std::map([1, 2], mapper))
                 std::println(std::len[int]([]) + std::len(joined) + std::len(mapped) + std::len(filtered))
                 std::println(case absent { Option::None => case indexed { Option::None => total, _ => 0, }, _ => 0, })
-                const callbacks = [mapper]
+                let callbacks = [mapper]
                 std::println(case callbacks[0] { Option::Some(f) => f(4), _ => 0, })
-                const units = std::map([1], lambda (x) { return () })
+                let units = std::map([1], lambda (x) { return () })
                 std::println(case units[0] { Option::Some(()) => true, Option::None => false, })
             }
         """, "[3, 6]\n0\n7\n12\ntrue", optimize = true)
     }
 
     @Test fun list_api_rejects_mutation_implicit_unwrapping_and_invariant_mismatches() {
-        reject("def main() { var xs = [1] xs[0] = 2 }", "mutation.index")
-        reject("use <std> def main() { const xs = [1] std::pop(xs) }", "list.immutable")
+        reject("def main() { let mut xs = [1] xs[0] = 2 }", "mutation.index")
+        reject("use <std> def main() { let xs = [1] std::pop(xs) }", "list.immutable")
         reject("def value(): int { return [1][0] }", "ReturnTypeMismatchException")
-        reject("use <std> def main() { const xs = [1] const ys = [1.0f] std::concat(xs, ys) }", "call.argument_type")
+        reject("use <std> def main() { let xs = [1] let ys = [1.0f] std::concat(xs, ys) }", "call.argument_type")
         reject("use <std> def main() { std::filter([1], lambda (x) { return x }) }", "ReturnTypeMismatchException")
         reject("use <std> def main() { std::map([1], lambda (x: string) { return x }) }", "call.argument_type")
         reject("use <std> def main() { std::get([1], true) }", "call.argument_type")
@@ -646,15 +664,15 @@ class DataLanguageTest {
         execute("""
             use <std>
             def main() {
-                var number = 1
-                const first = case true { true => { number = 2 }, false => (), }
-                const second = case true { _ => number = 3, }
+                let mut number = 1
+                let first = case true { true => { number = 2 }, false => (), }
+                let second = case true { _ => number = 3, }
                 std::println(first)
                 std::println(second)
                 std::println(number)
             }
         """, "()\n()\n3")
-        reject("def main() { var number = 1 const bad = (number = 2) }", "assignment.expression")
+        reject("def main() { let mut number = 1 let bad = (number = 2) }", "assignment.expression")
     }
 
     @Test fun generated_products_are_final_with_private_final_fields() {
@@ -705,9 +723,9 @@ class DataLanguageTest {
         reject("def f(value: Option[int]): int { return case value { Option::Some(x) if 1 => x, Option::None => 0, } }", "match.guard_type")
     }
     @Test fun invalid_variants_payloads_and_bindings_fail_before_codegen() {
-        reject("def main() { const x: Option[int] = Option::Some(\"bad\") }", "constructor.field_type")
-        reject("def main() { const x = Option::None }", "type.cannot_infer")
-        reject("def main() { const x = Option::Some(1, 2) }", "constructor.arity")
+        reject("def main() { let x: Option[int] = Option::Some(\"bad\") }", "constructor.field_type")
+        reject("def main() { let x = Option::None }", "type.cannot_infer")
+        reject("def main() { let x = Option::Some(1, 2) }", "constructor.arity")
         reject("def f(value: Option[int]): int { return case value { Option::Unknown => 0, _ => 1, } }", "pattern.unknown_variant")
         reject("type Pair = enum { Both(a: int, b: int) } def f(value: Pair): int { return case value { Pair::Both(x, x) => x, } }", "pattern.duplicate_binding")
     }

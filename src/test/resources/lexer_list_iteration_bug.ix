@@ -12,7 +12,7 @@ def values() : string[] {
 }
 
 pub def main() {
-    var source = values()
+    let mut source = values()
     std::println(first(source))
     std::println(first(source))
     for left : source {
@@ -23,7 +23,7 @@ pub def main() {
     for value : values() {
         std::println(value)
     }
-    var interval = std::range(0, 2)
+    let mut interval = std::range(0, 2)
     for value : interval {
         std::println(value)
     }

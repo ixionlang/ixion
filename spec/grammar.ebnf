@@ -1,6 +1,6 @@
 module              = { use_decl | declaration } EOF ;
 use_decl            = "use" "<" IDENT { "/" IDENT } ">" ;
-declaration         = [ "pub" ] ( type_decl | function_decl | const_decl ) ;
+declaration         = [ "pub" ] ( type_decl | function_decl | module_binding_decl ) ;
 
 type_decl           = "type" IDENT [ type_parameters ] "=" type_definition ;
 type_definition     = struct_definition | enum_definition | type_expr ;
@@ -12,8 +12,9 @@ enum_definition     = "enum" "{" variant { "," variant } [ "," ] "}" ;
 variant             = IDENT [ "(" fields ")" ] ;
 function_decl       = "def" IDENT [ type_parameters ] "(" [ fields ] ")"
                       [ ":" type_expr ] block ;
-const_decl          = "const" IDENT [ ":" type_expr ] "=" expression ;
-var_decl            = "var" IDENT [ ":" type_expr ] "=" expression ;
+module_binding_decl = "let" binding ;
+binding_decl        = "let" [ "mut" ] binding ;
+binding             = IDENT [ ":" type_expr ] "=" expression ;
 
 type_expr           = function_type | union_type ;
 function_type       = "(" [ type_items ] ")" "=>" type_expr ;
@@ -26,7 +27,7 @@ type_arguments      = "[" type_items "]" ;
 type_items          = type_expr { "," type_expr } [ "," ] ;
 
 block               = "{" { statement } "}" ;
-statement           = const_decl | var_decl | assignment | return_stmt
+statement           = binding_decl | assignment | return_stmt
                     | if_stmt | while_stmt | for_stmt | block | expression ;
 assignment          = IDENT assign_op expression | IDENT ( "++" | "--" ) ;
 assign_op           = "=" | "+=" | "-=" | "*=" | "/=" | "%=" ;

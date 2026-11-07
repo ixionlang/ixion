@@ -553,7 +553,7 @@ class Parser(private val lexer: Lexer) {
             match(TokenType.TYPEALIAS) -> parseTypeAlias()
             match(TokenType.DEF) -> parseFunction()
             match(TokenType.IF) -> parseIf()
-            check(TokenType.VARIABLE) || check(TokenType.CONSTANT) -> parseVariable()
+            check(TokenType.LET) -> parseVariable()
             match(TokenType.FOR) -> parseFor()
             match(TokenType.WHILE) -> parseWhile()
             match(TokenType.RETURN) -> parseReturn()
@@ -630,7 +630,8 @@ class Parser(private val lexer: Lexer) {
      */
     private fun parseVariable(): VariableStatement {
         val pos = this.pos
-        val mutability = consume()
+        consume()
+        val mutable = match(TokenType.MUT)
         val name = consume(TokenType.IDENTIFIER, "Expected variable name.")
         val type: Optional<TypeStatement> = if (match(TokenType.COLON)) {
             Optional.of(parseUnion())
@@ -639,7 +640,7 @@ class Parser(private val lexer: Lexer) {
         }
         consume(TokenType.ASSIGN, "Expected assignment operator.")
         val expression = expression()
-        return VariableStatement(pos, mutability, name, expression, type)
+        return VariableStatement(pos, mutable, name, expression, type)
     }
 
 

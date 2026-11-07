@@ -10,11 +10,11 @@ def sieve(values: int[]): int[] {
 }
 
 def main() {
-    var candidates: int[] = []
+    let mut candidates: int[] = []
     for n : std::range(2, 31) {
         candidates = std::append(candidates, n)
     }
-    const primes = sieve(candidates)
+    let primes = sieve(candidates)
     std::println(primes)
     std::println(std::fold(primes, 0, lambda (sum, prime) { return sum + prime }))
 }

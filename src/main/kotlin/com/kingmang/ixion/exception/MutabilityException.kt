@@ -2,6 +2,6 @@ package com.kingmang.ixion.exception
 
 class MutabilityException : IxException(
     14,
-    "Variable `{0}` is constant and cannot receive assignment.",
-    "Declare a variable with the `var` keyword to allow mutability."
+    "Binding `{0}` is immutable and cannot be reassigned.",
+    "Declare a local binding with `let mut` to allow reassignment."
 )

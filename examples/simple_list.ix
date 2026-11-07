@@ -2,8 +2,8 @@ use <std>
 
 pub def main(){
 
-    var int_list = [1,2,3]
-    var int_list2 = int[]
+    let int_list = [1,2,3]
+    let int_list2 = int[]
 
     std::push(int_list2, 20)
 

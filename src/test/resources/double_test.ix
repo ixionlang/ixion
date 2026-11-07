@@ -1,9 +1,9 @@
 use <std>
 
 pub def main(){
-    var x: double = 3.14
+    let mut x: double = 3.14
     std::println(x)
 
-    var y: double = 3.14d
+    let mut y: double = 3.14d
     std::println(y)
 }

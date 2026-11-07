@@ -826,7 +826,7 @@ class JavaCodegenVisitor(private val ixApi: IxApi, private val source: IxFile) :
     override fun visitVariable(statement: VariableStatement): Optional<String> {
         val type = currentContext!!.getVariable(statement.identifier())!!
         val javaType = getJavaTypeName(type)
-        val mutable = statement.mutability.type == TokenType.VARIABLE
+        val mutable = statement.mutable
         indent(); print("final $javaType" + if (mutable) "[] " else " ")
         print(sourceName(statement.identifier()) + " = ")
         if (mutable) print("new $javaType[]{")

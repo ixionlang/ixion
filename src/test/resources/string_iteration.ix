@@ -1,7 +1,7 @@
 use <std>
 
 pub def main(){
-    var names = ["Alice", "Bob", "Charlie"]
+    let mut names = ["Alice", "Bob", "Charlie"]
     for name : names {
         std::println(name)
     }

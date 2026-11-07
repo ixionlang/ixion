@@ -1,0 +1,11 @@
+use <std>
+
+def main(){
+    let mut a : int = 1
+
+}
+
+def some() : bool {
+    std::print("Hello")
+    return false
+}

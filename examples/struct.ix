@@ -22,6 +22,6 @@ def print_value(v : value) {
 }
 
 pub def main(){
-    var v = new_value("first", "second")
+    let v = new_value("first", "second")
     print_value(v)
 }

@@ -8,7 +8,6 @@ import com.kingmang.ixion.api.IxFile
 import com.kingmang.ixion.api.IxionConstant.Mutability
 import com.kingmang.ixion.ast.*
 import com.kingmang.ixion.exception.*
-import com.kingmang.ixion.lexer.TokenType
 import com.kingmang.ixion.lexer.TokenType.Companion.isKeyword
 import com.kingmang.ixion.modules.Modules.getExports
 import com.kingmang.ixion.modules.Modules.modules
@@ -505,8 +504,8 @@ class SemanticVisitor(val ixApi: IxApi, val rootContext: Context?, val source: I
      * @return Empty optional
      */
     override fun visitVariable(statement: VariableStatement): Optional<IxType> {
-        if (currentContext === rootContext && statement.mutability.type == TokenType.VARIABLE) {
-            FeatureException().send(ixApi, file, statement, "mutation.module_var: use const at module scope")
+        if (currentContext === rootContext && statement.mutable) {
+            FeatureException().send(ixApi, file, statement, "mutation.module_var: use let without mut at module scope")
         }
         val t: Optional<IxType> = statement.expression.accept(this)
         val exprType: IxType = t.orElseGet(Supplier { UnknownType() })
@@ -517,13 +516,9 @@ class SemanticVisitor(val ixApi: IxApi, val rootContext: Context?, val source: I
             exprType
         }
 
-        var mut = Mutability.IMMUTABLE
-        if (statement.mutability.type == TokenType.VARIABLE) {
-            mut = Mutability.MUTABLE
-        }
-
+        val mutability = if (statement.mutable) Mutability.MUTABLE else Mutability.IMMUTABLE
         currentContext!!.addVariableOrError(ixApi, statement.name.source, type, file, statement)
-        currentContext!!.setVariableMutability(statement.name.source, mut)
+        currentContext!!.setVariableMutability(statement.name.source, mutability)
         return Optional.empty()
     }
 

@@ -124,7 +124,7 @@ class DeclarationResolutionTest {
         analyze("""
             type Number = int
             def consume(Number: string): Number {
-                const other: Number = 42
+                let other: Number = 42
                 return other
             }
         """)
@@ -200,8 +200,8 @@ class DeclarationResolutionTest {
     @Test
     fun any_and_list_widening_do_not_bypass_static_checks() {
         assertError("def narrow(value: any): int { return value }", "ReturnTypeMismatchException")
-        assertError("def wrong() { const original = [1, 2] const values: any[] = original }", "BadAssignmentException")
-        assertError("def wrong() { const original = [1, 2] const values: float[] = original }", "BadAssignmentException")
+        assertError("def wrong() { let original = [1, 2] let values: any[] = original }", "BadAssignmentException")
+        assertError("def wrong() { let original = [1, 2] let values: float[] = original }", "BadAssignmentException")
         assertError("def wrong(value: any): int[] { return value }", "ReturnTypeMismatchException")
     }
 
@@ -226,15 +226,15 @@ class DeclarationResolutionTest {
             def widen(value: double): double { return value }
             def asAny(value: int): any { return value }
             def main() {
-                var number: double = one()
+                let mut number: double = one()
                 number = 5
                 std::println(number)
                 std::println(widen(2))
-                const anything: any = 7
+                let anything: any = 7
                 std::println(anything)
                 std::println(asAny(8))
                 std::println(Box(9).value)
-                const literal: double = 3.14
+                let literal: double = 3.14
                 std::println(literal)
             }
         """, "5.0\n2.0\n7\n8\n9.0\n3.140000104904175")
@@ -254,17 +254,17 @@ class DeclarationResolutionTest {
                 }
             }
             def main() {
-                const first: Target = 3
+                let first: Target = 3
                 show(first)
                 show(make())
                 show(6)
-                var value: Target = "waiting"
+                let mut value: Target = "waiting"
                 value = 4
                 show(value)
-                const source: Source = 5
-                const target: Target = source
+                let source: Source = 5
+                let target: Target = source
                 show(target)
-                const text: Source = "unchanged"
+                let text: Source = "unchanged"
                 show(text)
             }
         """, "3.0\n2.0\n6.0\n4.0\n5.0\nunchanged")
@@ -276,7 +276,7 @@ class DeclarationResolutionTest {
             use <std>
             use <domain/models>
             def main() {
-                const value: models::Alias = models::Box(42)
+                let value: models::Alias = models::Box(42)
                 std::println(models::read(value))
             }
         """, "42", mapOf("domain/models" to """

@@ -6,7 +6,7 @@ pub def main(){
         std::println(i)
     }
 
-    var i = 10
+    let mut i = 10
     while i < 20 {
         std::println("i is " + i)
         i++
