@@ -23,7 +23,7 @@ def render(e: Expr): string {
 }
 
 def main() {
-    const expression = Expr::Mul(
+    let expression = Expr::Mul(
         Expr::Add(Expr::Number(2), Expr::Number(5)),
         Expr::Number(6)
     )

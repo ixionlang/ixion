@@ -2,10 +2,10 @@ use <std>
 
 pub def main(){
 
-    var int_list = [1,2,3]
-    const empty: int[] = []
+    let mut int_list = [1,2,3]
+    let empty: int[] = []
 
-    const int_list2 = std::append(empty, 20)
+    let int_list2 = std::append(empty, 20)
 
     std::println(int_list)
     std::println(int_list2)

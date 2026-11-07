@@ -35,10 +35,10 @@ def is_alpha(value : string) : bool {
 }
 
 def next_token(source : string, start : int) : Token {
-    var cursor = start
-    var current = char_at(source, cursor)
-    var next = char_at(source, cursor + 1)
-    var text = ""
+    let mut cursor = start
+    let mut current = char_at(source, cursor)
+    let mut next = char_at(source, cursor + 1)
+    let mut text = ""
 
     if strings::equals(current, "") {
         return Token(9, "", start, start)
@@ -77,7 +77,7 @@ def next_token(source : string, start : int) : Token {
             cursor++
             current = char_at(source, cursor)
         }
-        if contains(text, ["case", "for", "while", "if", "else", "return", "struct", "enum", "def", "type", "const", "var", "pub", "use", "new", "lambda", "true", "false"]) {
+        if contains(text, ["case", "for", "while", "if", "else", "return", "struct", "enum", "def", "type", "let", "mut", "pub", "use", "new", "lambda", "true", "false"]) {
             return Token(2, text, start, cursor)
         }
         return Token(1, text, start, cursor)
@@ -89,7 +89,7 @@ def next_token(source : string, start : int) : Token {
             cursor++
             current = char_at(source, cursor)
         }
-        var kind = 3
+        let mut kind = 3
         if strings::equals(current, ".") && is_digit(char_at(source, cursor + 1)) {
             kind = 4
             text = text + current
@@ -150,10 +150,10 @@ def next_token(source : string, start : int) : Token {
 }
 
 def lex(source : string) {
-    var cursor = 0
-    var running = true
+    let mut cursor = 0
+    let mut running = true
     while running {
-        var token = next_token(source, cursor)
+        let mut token = next_token(source, cursor)
         if token.typo != 0 {
             std::println(token)
         }
@@ -165,5 +165,5 @@ def lex(source : string) {
 }
 
 pub def main() {
-    lex("var x = 42 + 3.5 // ok\nx >= 2")
+    lex("let x = 42 + 3.5 // ok\nx >= 2")
 }

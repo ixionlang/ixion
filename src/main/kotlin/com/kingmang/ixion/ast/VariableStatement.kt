@@ -8,7 +8,7 @@ import java.util.*
 
 class VariableStatement(
     pos: Position?,
-    val mutability: Token,
+    val mutable: Boolean,
     val name: Token,
     val expression: Expression,
     val type: Optional<TypeStatement>

@@ -22,7 +22,7 @@ def encode(response: types::Response): WireResponse {
 }
 
 pub def serve(config: types::ServerConfig, handler: (types::Request) => types::Response): Result[unit, types::ServerError] {
-    const result = http_server::serve(
+    let result = http_server::serve(
         config.host, config.port, config.maxBodyBytes, config.workers, config.queueCapacity, config.shutdownSeconds,
         lambda (request) { return encode(handler(decode(request))) }
     )

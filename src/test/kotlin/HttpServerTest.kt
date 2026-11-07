@@ -225,8 +225,8 @@ class HttpServerTest {
         router::route("GET", "/explicit", lambda (request) { return response::text(200, "GET") }),
         router::route("HEAD", "/explicit", lambda (request) { return types::Response(200, [types::Header("X-Handler", "explicit")], "HEAD") }),
         router::route("GET", "/inspect", lambda (request) {
-            const headers = std::map(request.query, lambda (param) { return types::Header("X-" + param.name, param.value) })
-            const selected = std::filter(request.headers, lambda (header) { return strings::equals(strings::toLowerCase(header.name), "x-test") })
+            let headers = std::map(request.query, lambda (param) { return types::Header("X-" + param.name, param.value) })
+            let selected = std::filter(request.headers, lambda (header) { return strings::equals(strings::toLowerCase(header.name), "x-test") })
             return types::Response(200, headers, std::fold(selected, "", lambda (acc, header) { return acc + header.value + ";" }))
         })
     """.trimIndent()

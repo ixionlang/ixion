@@ -1,24 +1,24 @@
 use <std>
 
 def increment(value : int) : int {
-    var local = value
-    var before = local++
+    let mut local = value
+    let mut before = local++
     return before + local
 }
 
 pub def main() {
-    var cursor = 0
+    let mut cursor = 0
     while cursor < 2 {
         cursor++
     }
     std::println(cursor)
-    var before = cursor--
+    let mut before = cursor--
     std::println(before)
     while cursor > 0 {
         cursor--
     }
     std::println(cursor)
-    var decimal = 0.0d
+    let mut decimal = 0.0d
     while decimal < 2.0d {
         decimal++
     }

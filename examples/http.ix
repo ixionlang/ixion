@@ -2,7 +2,7 @@ use <std>
 use <http>
 
 pub def main() {
-    var url = "https://example.com"
+    let url = "https://example.com"
     std::println("status: " + http::status("GET", url, ""))
     std::println(http::get(url))
 }

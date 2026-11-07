@@ -18,10 +18,10 @@ class DataSyntaxTest {
             type Tree[T] = enum { Empty, Leaf(value: T), }
             type Vector[T] = T[][]
             def main() {
-                const specialized = identity[int](1)
-                const indexed = values[index]
-                const called = (values)[index](1)
-                const matched = case value {
+                let specialized = identity[int](1)
+                let indexed = values[index]
+                let called = (values)[index](1)
+                let matched = case value {
                     Tree::Leaf(x) if x > 0 => x,
                     Tree::Leaf(x) => -x,
                     Tree::Empty => 0,

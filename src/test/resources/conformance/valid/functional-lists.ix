@@ -1,9 +1,9 @@
 use <std>
 
 def main() {
-    const original = [1, 2, 3]
-    const doubled = std::map(original, lambda (x) { return x * 2 })
-    const selected = std::filter(doubled, lambda (x) { return x > 2 })
+    let original = [1, 2, 3]
+    let doubled = std::map(original, lambda (x) { return x * 2 })
+    let selected = std::filter(doubled, lambda (x) { return x > 2 })
     std::println(std::fold(selected, 0, lambda (sum, x) { return sum + x }))
     std::println(case selected[0] { Option::Some(x) => x, Option::None => -1, })
     std::println(case selected[-1] { Option::None => "absent", _ => "present", })

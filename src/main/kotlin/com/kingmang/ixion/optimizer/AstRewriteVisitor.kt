@@ -137,7 +137,7 @@ abstract class AstRewriteVisitor : Visitor<Node> {
     override fun visitVariable(statement: VariableStatement): Statement {
         return VariableStatement(
             statement.position,
-            statement.mutability,
+            statement.mutable,
             statement.name,
             rewriteExpression(statement.expression),
             statement.type

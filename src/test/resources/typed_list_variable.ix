@@ -1,7 +1,7 @@
 use <std>
 
 pub def main(){
-    var list: int[] = [1, 2, 3]
+    let mut list: int[] = [1, 2, 3]
     for item : list {
         std::println(item)
     }

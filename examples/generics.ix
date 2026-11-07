@@ -5,8 +5,8 @@ type generic = struct[T] {
 }
 
 pub def main(){
-    var a = generic("Hello")
-    var b = generic(10)
+    let a = generic("Hello")
+    let b = generic(10)
 
     println(a.value)
     println(b.value)

@@ -5,9 +5,9 @@ def collatz(start: int, budget: int): Result[int[], string] {
     if start <= 0 {
         return Result::Err("Start must be positive")
     }
-    var value = start
-    var steps = 0
-    var path = [value]
+    let mut value = start
+    let mut steps = 0
+    let mut path = [value]
     while value != 1 && steps < budget {
         if value % 2 == 0 {
             value = value / 2

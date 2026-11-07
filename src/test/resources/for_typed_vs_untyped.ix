@@ -1,14 +1,14 @@
 use <std>
 
 pub def main(){
-    var a : int[] = [1, 2, 3]
+    let mut a : int[] = [1, 2, 3]
     for i : a {
         std::println(i)
     }
 
     std::println("----")
 
-    var b = [4, 5, 6]
+    let mut b = [4, 5, 6]
     for j : b {
         std::println(j)
     }

@@ -20,7 +20,7 @@ def leaves[T](tree: Tree[T]): T[] {
 }
 
 def main() {
-    const tree = Tree::Branch(Tree::Leaf(3), Tree::Branch(Tree::Leaf(7), Tree::Leaf(12)))
+    let tree = Tree::Branch(Tree::Leaf(3), Tree::Branch(Tree::Leaf(7), Tree::Leaf(12)))
     std::println(leaves(tree))
     std::println(leaves(mapTree(tree, lambda (n) { return n >= 7 })))
 }

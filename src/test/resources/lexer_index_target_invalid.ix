@@ -1,6 +1,6 @@
 use <std>
 
 pub def main() {
-    var source = 42
+    let mut source = 42
     std::println(source[0])
 }

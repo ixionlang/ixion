@@ -35,8 +35,8 @@ class LexerTokenTest {
     @Test
     fun keywords_identifiers_and_decimal_boundaries() {
         assertEquals(
-            listOf(2 to "var", 1 to "variable_1", 2 to "lambda", 1 to "A2", 3 to "0", 3 to "12", 4 to "3.5", 3 to "7", 7 to ".", 9 to ""),
-            scan("var variable_1 lambda A2 0 12 3.5 7.").map { it.kind to it.text }
+            listOf(2 to "let", 2 to "mut", 1 to "variable_1", 2 to "lambda", 1 to "A2", 3 to "0", 3 to "12", 4 to "3.5", 3 to "7", 7 to ".", 9 to ""),
+            scan("let mut variable_1 lambda A2 0 12 3.5 7.").map { it.kind to it.text }
         )
     }
 
@@ -50,9 +50,9 @@ class LexerTokenTest {
 
     @Test
     fun comments_include_empty_blocks_and_eof() {
-        val source = "/**/var/* text\nmore */x// end"
+        val source = "/**/let/* text\nmore */x// end"
         val tokens = scan(source)
-        assertEquals(listOf(2 to "var", 1 to "x", 9 to ""), tokens.map { it.kind to it.text })
+        assertEquals(listOf(2 to "let", 1 to "x", 9 to ""), tokens.map { it.kind to it.text })
         assertEquals(4, tokens[0].start)
         assertEquals(source.length, tokens.last().end)
         assertEquals(listOf(Token(9, "", 5, 5)), scan("//end"))

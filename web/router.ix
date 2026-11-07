@@ -10,10 +10,10 @@ pub type Route = struct {
 }
 
 pub def route(method: string, path: string, handler: (types::Request) => types::Response): Route {
-    var names: string[] = []
+    let mut names: string[] = []
     for segment : strings::split(path, "/") {
         if (strings::startsWith(segment, ":")) {
-            const name = strings::substring(segment, 1, std::len(segment))
+            let name = strings::substring(segment, 1, std::len(segment))
             if (strings::equals(name, "")) { std::panic("Empty route parameter name") }
             for existing : names {
                 if (strings::equals(existing, name)) { std::panic("Duplicate route parameter name") }
@@ -33,11 +33,11 @@ pub def param(request: types::Request, name: string): Option[string] {
 
 // Segment counts and empty segments are significant; parameters match one nonempty segment.
 pub def matchPath(pattern: string, path: string): Option[types::QueryParam[]] {
-    const expected = strings::split(pattern, "/")
-    const actual = strings::split(path, "/")
+    let expected = strings::split(pattern, "/")
+    let actual = strings::split(path, "/")
     if (std::len(expected) != std::len(actual)) { return Option::None }
-    var params: types::QueryParam[] = []
-    var index = 0
+    let mut params: types::QueryParam[] = []
+    let mut index = 0
     for segment : expected {
         case std::get(actual, index) {
             Option::Some(value) => {
@@ -60,8 +60,8 @@ def find(routes: Route[], request: types::Request, method: string): Option[types
     for entry : routes {
         if (strings::equals(entry.path, request.path) && strings::equals(entry.method, method)) {
             // A literal ':' segment belongs to the parameter syntax, not an exact route.
-            const segments = strings::split(entry.path, "/")
-            const dynamic = std::filter(segments, lambda (segment) { return strings::startsWith(segment, ":") })
+            let segments = strings::split(entry.path, "/")
+            let dynamic = std::filter(segments, lambda (segment) { return strings::startsWith(segment, ":") })
             if (std::len(dynamic) == 0) {
                 return Option::Some(entry.handler(request with { params = [] }))
             }
@@ -90,7 +90,7 @@ pub def dispatch(routes: Route[], request: types::Request): types::Response {
             Option::None => {},
         }
     }
-    var methods: string[] = []
+    let mut methods: string[] = []
     for entry : routes {
         case matchPath(entry.path, request.path) {
           Option::Some(_) => {
@@ -103,7 +103,7 @@ pub def dispatch(routes: Route[], request: types::Request): types::Response {
         }
     }
     if (std::len(methods) > 0) {
-        const allowed = std::fold(methods, "", lambda (acc, method) {
+        let allowed = std::fold(methods, "", lambda (acc, method) {
             if (strings::equals(acc, "")) { return method }
             return acc + ", " + method
         })

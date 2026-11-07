@@ -9,13 +9,13 @@ type Wrapper = struct {
 }
 
 pub def main() {
-    var token = Token(1)
+    let mut token = Token(1)
     if token.kind == 1 {
         std::println("OK")
     }
     token = token with { kind = 2 }
-    var wrapper = Wrapper(token)
+    let mut wrapper = Wrapper(token)
     std::println(wrapper.token.kind)
-    var tokens = [token]
+    let mut tokens = [token]
     std::println(case tokens[0] { Option::Some(value) => value.kind, Option::None => -1, })
 }

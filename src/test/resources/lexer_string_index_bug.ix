@@ -5,19 +5,19 @@ def numbers() : int[] {
 }
 
 pub def main() {
-    var source = "abc"
+    let mut source = "abc"
     std::println(source[0])
     std::println(source[1 + 1])
     std::println(("xyz")[1])
     std::println(case numbers()[1] { Option::Some(value) => value, Option::None => -1, })
-    var matrix = [[1, 2], [3, 4]]
+    let mut matrix = [[1, 2], [3, 4]]
     std::println(case matrix[1] {
         Option::Some(row) => case row[0] { Option::Some(value) => value, Option::None => -1, },
         Option::None => -1,
     })
-    var cursor = 0
+    let mut cursor = 0
     std::println(source[cursor++])
     std::println(cursor)
-    const empty: int[] = []
+    let empty: int[] = []
     std::println(empty)
 }

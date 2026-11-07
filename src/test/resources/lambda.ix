@@ -1,13 +1,13 @@
 use <std>
 
 pub def main() {
-    var add = lambda (a: int, b: int): int {
+    let mut add = lambda (a: int, b: int): int {
         return a + b
     }
 
     std::println(add(20, 22))
 
-    var greet = lambda (name: string): void {
+    let mut greet = lambda (name: string): void {
         std::println("Hello, " + name)
     }
     greet("Ixion")

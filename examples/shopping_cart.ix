@@ -10,9 +10,9 @@ def total(items: Item[]): int {
 }
 
 def main() {
-    const cart = [Item("Notebook", 500, 2), Item("Pen", 150, 3), Item("Sticker", 100, 0)]
-    const available = std::filter(cart, lambda (item) { return item.quantity > 0 })
-    const discounted = std::map(available, lambda (item) {
+    let cart = [Item("Notebook", 500, 2), Item("Pen", 150, 3), Item("Sticker", 100, 0)]
+    let available = std::filter(cart, lambda (item) { return item.quantity > 0 })
+    let discounted = std::map(available, lambda (item) {
         return item with { price = item.price * 90 / 100 }
     })
     std::println(std::map(available, lambda (item) { return item.name }))

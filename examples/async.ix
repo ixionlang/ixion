@@ -2,7 +2,7 @@ use <std>
 use <async>
 
 pub def main() {
-    var taskId = async::run(lambda (): void {
+    let taskId = async::run(lambda (): void {
         async::sleep(300)
         std::println("Background task finished")
     })
