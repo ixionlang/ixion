@@ -2,7 +2,6 @@
 
 **Edition:** Ixion Core 1.0, normative draft dated 19 October 2026.
 **Russian version:** [Русский](specification.ru.md).
-**Compiler status:** [implementation conformance](implementation-status.md).
 
 ## Contents
 
@@ -39,11 +38,6 @@ Ixion is a statically typed language with immutable data values, locally mutable
 bindings, functions, and closed algebraic data types. This document defines the
 source language, static validity, evaluation, the required `std` module, and the
 boundary with the external environment.
-
-This is a self-contained contract for the **target Core 1.0 edition**, not a list
-of changes or a claim that every existing compiler build already implements every
-rule. Compiler conformance is documented separately. Installation syntax, CLI,
-IDE project formats, and generated class naming are outside the language.
 
 ### 1.2. Normative terms
 
@@ -1245,8 +1239,3 @@ and polymorphic recursion; evaluation order; early returns; snapshot captures;
 immutability and foreign aliasing; every pattern form, guards, exhaustiveness,
 unreachability, and uninhabited types; structural equality with NaN/signed zero;
 module initialization and the native boundary.
-
-Examples and tutorials do not replace normative rules. A discrepancy between the
-current compiler and this document is recorded in the
-[implementation status](implementation-status.md), rather than becoming an implicit
-exception to the specification.
