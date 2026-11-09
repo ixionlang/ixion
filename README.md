@@ -11,7 +11,7 @@ Specification: [Русский](spec/specification.ru.md) ·
 Docs: [Русский](docs/ru.md)
 
 
-## Build from source
+### Build from source
 
 Install JDK 21 and make sure `java -version` reports version 21. The repository includes the Gradle Wrapper, which downloads Gradle and the project dependencies on the first build.
 
@@ -35,6 +35,8 @@ On Windows, run this in PowerShell:
 ```
 
 The build runs the tests and writes the compiler JAR to `build/libs/`.
+
+### Examples
 
 tree: 
 ```scala
@@ -85,7 +87,7 @@ def main() {
 ```
 
 
-## Contributions
+### Contributions
 We will review and help with all reasonable pull requests as long as the guidelines below are met.
 
 - The license header must be applied to all java source code files.
