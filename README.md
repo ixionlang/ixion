@@ -11,8 +11,32 @@ Specification: [Русский](spec/specification.ru.md) ·
 Docs: [Русский](docs/ru.md)
 
 
-> [!IMPORTANT]
-> Before installing the language, install JDK.
+### Build from source
+
+Install JDK 21 and make sure `java -version` reports version 21. The repository includes the Gradle Wrapper, which downloads Gradle and the project dependencies on the first build.
+
+Clone the repository and open its root directory.
+
+```sh
+git clone https://github.com/ixionlang/ixion.git
+cd ixion
+```
+
+On macOS or Linux, run:
+
+```sh
+./gradlew build
+```
+
+On Windows, run this in PowerShell:
+
+```powershell
+.\gradlew.bat build
+```
+
+The build runs the tests and writes the compiler JAR to `build/libs/`.
+
+### Examples
 
 tree: 
 ```scala
@@ -63,7 +87,7 @@ def main() {
 ```
 
 
-## Contributions
+### Contributions
 We will review and help with all reasonable pull requests as long as the guidelines below are met.
 
 - The license header must be applied to all java source code files.
