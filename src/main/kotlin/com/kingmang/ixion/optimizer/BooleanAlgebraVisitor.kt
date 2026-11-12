@@ -21,18 +21,22 @@ class BooleanAlgebraVisitor : AstRewriteVisitor() {
             expression !is BinaryExpression && expression !is PrefixExpression) return expression
         val conversion = Conversion()
         val polynomial = conversion.read(expression) ?: return expression
-        val candidate = conversion.emit(polynomial, expression)
         // Also consider a complemented polynomial: !a is cheaper than true ^ a.
         val complement = polynomial.toMutableSet().also { toggle(it, 0) }
-        val negated = PrefixExpression(expression.position, token(TokenType.NOT, expression),
-            conversion.emit(complement, expression)).also { it.realType = BuiltInType.BOOLEAN }
-        val best = if (cost(negated) < cost(candidate)) negated else candidate
-        return if (cost(best) < conversion.nodes) best else expression
+        val directCost = cost(polynomial)
+        val negatedCost = 1 + cost(complement)
+        if (minOf(directCost, negatedCost) >= conversion.nodes) return expression
+
+        return if (negatedCost < directCost) {
+            PrefixExpression(expression.position, token(TokenType.NOT, expression),
+                conversion.emit(complement, expression)).also { it.realType = BuiltInType.BOOLEAN }
+        } else conversion.emit(polynomial, expression)
     }
 
     private class Conversion {
-        val variables = linkedMapOf<String, IdentifierExpression>()
+        private val variables = linkedMapOf<String, IdentifierExpression>()
         var nodes = 0
+            private set
         private var work = 0
 
         /**
@@ -41,7 +45,8 @@ class BooleanAlgebraVisitor : AstRewriteVisitor() {
          * set is constant 0. Returns null for unsafe syntax or an exhausted conversion budget.
          */
         fun read(expression: Expression): Set<Int>? {
-            if (++nodes > MAX_NODES || expression.realType != BuiltInType.BOOLEAN) return null
+            nodes++
+            if (nodes > MAX_NODES || expression.realType != BuiltInType.BOOLEAN) return null
             return when (expression) {
                 is LiteralExpression -> when (expression.literal.type) {
                     TokenType.TRUE -> setOf(0)
@@ -82,7 +87,8 @@ class BooleanAlgebraVisitor : AstRewriteVisitor() {
         private fun add(left: Set<Int>, right: Set<Int>): Set<Int>? {
             val result = left.toMutableSet()
             for (term in right) {
-                if (++work > MAX_WORK) return null
+                work++
+                if (work > MAX_WORK) return null
                 toggle(result, term)
                 if (result.size > MAX_TERMS) return null
             }
@@ -96,7 +102,8 @@ class BooleanAlgebraVisitor : AstRewriteVisitor() {
         private fun multiply(left: Set<Int>, right: Set<Int>): Set<Int>? {
             val result = mutableSetOf<Int>()
             for (a in left) for (b in right) {
-                if (++work > MAX_WORK) return null
+                work++
+                if (work > MAX_WORK) return null
                 toggle(result, a or b) // x*x = x
                 if (result.size > MAX_TERMS) return null
             }
@@ -133,14 +140,18 @@ class BooleanAlgebraVisitor : AstRewriteVisitor() {
             if (!terms.add(term)) terms.remove(term)
         }
 
-        /** Counts syntax nodes as a local size heuristic, without predicting JIT performance. */
-        private fun cost(expression: Expression): Int = when (expression) {
-            is BinaryExpression -> 1 + cost(expression.left) + cost(expression.right)
-            is PrefixExpression -> 1 + cost(expression.right)
-            else -> 1
+        /**
+         * Counts the nodes emit() would build without allocating an AST.
+         * A degree-k monomial has k leaves and k-1 ANDs; n terms need n-1 XORs.
+         * Both constants, including the empty polynomial (false), occupy one node.
+         */
+        private fun cost(polynomial: Set<Int>): Int {
+            if (polynomial.isEmpty()) return 1
+            return polynomial.size - 1 + polynomial.sumOf { mask ->
+                if (mask == 0) 1 else 2 * mask.countOneBits() - 1
+            }
         }
 
-        /** Creates a supported boolean operator or literal token at [original]'s source position. */
         private fun token(type: TokenType, original: Expression) =
             Token(type, original.position?.line ?: 0, original.position?.col ?: 0, when (type) {
                 TokenType.AND -> "&&"
@@ -150,12 +161,10 @@ class BooleanAlgebraVisitor : AstRewriteVisitor() {
                 else -> "false"
             })
 
-        /** Creates a typed boolean constant while retaining [original]'s source position. */
         private fun literal(value: Boolean, original: Expression): Expression =
             LiteralExpression(original.position, token(if (value) TokenType.TRUE else TokenType.FALSE, original))
                 .also { it.realType = BuiltInType.BOOLEAN }
 
-        /** Joins two boolean trees with [op], preserving the source position and checked type. */
         private fun binary(left: Expression, op: TokenType, right: Expression, original: Expression): Expression =
             BinaryExpression(original.position, left, token(op, original), right)
                 .also { it.realType = BuiltInType.BOOLEAN }
