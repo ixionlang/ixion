@@ -9,30 +9,23 @@ import kotlin.random.Random
 
 class BooleanAlgebraVisitorTest {
     private val visitor = BooleanAlgebraVisitor()
-    /** Creates a token for a synthetic test expression. */
     private fun token(type: TokenType, source: String = type.name) = Token(type, 1, 1, source)
-    /** Creates a checked boolean variable without a source location. */
+
     private fun variable(name: String): Expression =
         IdentifierExpression(null, token(TokenType.IDENTIFIER, name)).also { it.realType = BuiltInType.BOOLEAN }
 
-    /** Creates a checked boolean constant for truth-table and identity tests. */
     private fun literal(value: Boolean): Expression =
         LiteralExpression(null, token(if (value) TokenType.TRUE else TokenType.FALSE, value.toString()))
             .also { it.realType = BuiltInType.BOOLEAN }
 
-    /** Wraps an expression in checked boolean negation. */
     private fun not(right: Expression): Expression =
         PrefixExpression(null, token(TokenType.NOT, "!"), right).also { it.realType = BuiltInType.BOOLEAN }
 
-    /** Builds a boolean-typed binary node, including unsupported operators for rejection tests. */
     private fun binary(left: Expression, op: TokenType, right: Expression): Expression =
         BinaryExpression(null, left, token(op), right).also { it.realType = BuiltInType.BOOLEAN }
 
-    /** Builds a conjunction for algebraic identity tests. */
     private fun and(a: Expression, b: Expression) = binary(a, TokenType.AND, b)
-    /** Builds a disjunction for identity and expansion-limit tests. */
     private fun or(a: Expression, b: Expression) = binary(a, TokenType.OR, b)
-    /** Builds an exclusive disjunction for cancellation tests. */
     private fun xor(a: Expression, b: Expression) = binary(a, TokenType.XOR, b)
 
     /** Checks cancellation, idempotence, constants, and complemented output against known identities. */
@@ -77,6 +70,26 @@ class BooleanAlgebraVisitorTest {
         assertTreeEquals(numeric, visitor.rewriteExpression(numeric))
     }
 
+    @Test
+    fun selects_smaller_output_and_keeps_original_on_equal_cost() {
+        val a = variable("a")
+        val b = variable("b")
+        val product = and(a, b)
+        val negated = visitor.rewriteExpression(xor(literal(true), product)) as PrefixExpression
+        assertEquals(TokenType.NOT, negated.operator.type)
+        val negatedProduct = negated.right as BinaryExpression
+        assertEquals(TokenType.AND, negatedProduct.operator.type)
+        assertSame(a, negatedProduct.left)
+        assertSame(b, negatedProduct.right)
+
+        // Boolean inequality and XOR both occupy three nodes: retain the original operator.
+        val inequality = binary(a, TokenType.NOTEQUAL, b)
+        assertTreeEquals(inequality, visitor.rewriteExpression(inequality))
+        // The complement of false is true, but !true costs more than the false literal.
+        val zero = visitor.rewriteExpression(xor(product, product)) as LiteralExpression
+        assertEquals(TokenType.FALSE, zero.literal.type)
+    }
+
     /** Exercises conversion limits, bottom-up traversal, and isolation between conversions. */
     @Test
     fun conversion_limits_preserve_structure_and_traversal_simplifies_children() {
@@ -111,10 +124,17 @@ class BooleanAlgebraVisitorTest {
         repeat(400) {
             val original = expression(4)
             val optimized = visitor.rewriteExpression(original)
+            assertTrue(nodeCount(optimized) <= nodeCount(original), "sample $it must not grow")
             for (inputs in 0..7) {
                 assertEquals(evaluate(original, inputs), evaluate(optimized, inputs), "sample $it, inputs $inputs")
             }
         }
+    }
+
+    private fun nodeCount(expression: Expression): Int = when (expression) {
+        is BinaryExpression -> 1 + nodeCount(expression.left) + nodeCount(expression.right)
+        is PrefixExpression -> 1 + nodeCount(expression.right)
+        else -> 1
     }
 
     /** Compares preserved syntax recursively, allowing traversal to reconstruct annotated parent nodes. */
