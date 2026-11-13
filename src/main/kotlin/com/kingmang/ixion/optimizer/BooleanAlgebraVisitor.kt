@@ -73,9 +73,15 @@ class BooleanAlgebraVisitor : AstRewriteVisitor() {
                     val right = read(expression.right) ?: return null
                     when (op) {
                         TokenType.AND -> multiply(left, right)
-                        TokenType.OR -> add(add(left, right) ?: return null,
-                            multiply(left, right) ?: return null)
-                        TokenType.EQUAL -> add(add(left, right) ?: return null, setOf(0))
+                        TokenType.OR -> {
+                            val sum = add(left, right) ?: return null
+                            val product = multiply(left, right) ?: return null
+                            add(sum, product)
+                        }
+                        TokenType.EQUAL -> {
+                            val xor = add(left, right) ?: return null
+                            add(xor, setOf(0))
+                        }
                         else -> add(left, right) // XOR and boolean inequality
                     }
                 }
@@ -116,14 +122,18 @@ class BooleanAlgebraVisitor : AstRewriteVisitor() {
          */
         fun emit(polynomial: Set<Int>, original: Expression): Expression {
             val leaves = variables.values.toList()
-            val terms = polynomial.sorted().map { mask ->
-                if (mask == 0) literal(true, original)
-                else leaves.indices.filter { mask and (1 shl it) != 0 }
-                    .map { leaves[it] as Expression }
-                    .reduce { left, right -> binary(left, TokenType.AND, right, original) }
-            }
+            val terms = polynomial.sorted().map { mask -> emitMonomial(mask, leaves, original) }
             return if (terms.isEmpty()) literal(false, original)
             else terms.reduce { left, right -> binary(left, TokenType.XOR, right, original) }
+        }
+
+        private fun emitMonomial(mask: Int, leaves: List<IdentifierExpression>, original: Expression): Expression {
+            if (mask == 0) return literal(true, original)
+
+            val factors: List<Expression> = leaves.indices
+                .filter { index -> mask and (1 shl index) != 0 }
+                .map { index -> leaves[index] }
+            return factors.reduce { left, right -> binary(left, TokenType.AND, right, original) }
         }
     }
 
