@@ -33,7 +33,7 @@ class OptimizationVisitorsTest {
         val cancellation = binary(a, TokenType.XOR, a)
         assertTrue(ConstantFoldingVisitor().rewriteExpression(cancellation) is BinaryExpression)
         val simplified = BooleanAlgebraVisitor().rewriteExpression(cancellation) as LiteralExpression
-        assertEquals(TokenType.FALSE, simplified.literal.type)
+        assertEquals(Token(TokenType.FALSE, position.line, position.col, "false"), simplified.literal)
         assertEquals(position, simplified.position)
 
         val sum = binary(literal(TokenType.INT, "2", BuiltInType.INT), TokenType.ADD,

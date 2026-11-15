@@ -37,12 +37,13 @@ class BooleanAlgebraVisitorTest {
         assertSame(a, visitor.rewriteExpression(xor(and(a, b), and(a, not(b)))))
         assertSame(a, visitor.rewriteExpression(or(and(a, b), and(a, not(b)))))
         val parity = visitor.rewriteExpression(xor(or(a, b), and(a, b))) as BinaryExpression
-        assertEquals(TokenType.XOR, parity.operator.type)
+        assertEquals(Token(TokenType.XOR, 0, 0, "^"), parity.operator)
         assertSame(a, parity.left)
         assertSame(b, parity.right)
         val zero = visitor.rewriteExpression(xor(a, a)) as LiteralExpression
         assertEquals(TokenType.FALSE, zero.literal.type)
         val one = visitor.rewriteExpression(or(a, not(a))) as LiteralExpression
+        assertEquals("true", one.literal.source)
         assertEquals(TokenType.TRUE, one.literal.type)
         assertSame(a, visitor.rewriteExpression(and(a, a)))
         assertSame(a, visitor.rewriteExpression(not(not(a))))
@@ -77,8 +78,10 @@ class BooleanAlgebraVisitorTest {
         val product = and(a, b)
         val negated = visitor.rewriteExpression(xor(literal(true), product)) as PrefixExpression
         assertEquals(TokenType.NOT, negated.operator.type)
+        assertEquals("!", negated.operator.source)
         val negatedProduct = negated.right as BinaryExpression
         assertEquals(TokenType.AND, negatedProduct.operator.type)
+        assertEquals("&&", negatedProduct.operator.source)
         assertSame(a, negatedProduct.left)
         assertSame(b, negatedProduct.right)
 
