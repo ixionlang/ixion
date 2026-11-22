@@ -371,7 +371,10 @@ class TypeCheckVisitor(private val ixApi: IxApi, private val rootContext: Contex
                 if (currentContext.getVariableMutability(expression.left.identifier.source) == com.kingmang.ixion.api.IxionConstant.Mutability.IMMUTABLE)
                     fail(expression.left, "mutation.immutable_binding: ${expression.left.identifier.source}")
                 if (!typesMatch(expression.left.realType, expression.right.realType)) {
-                    BadAssignmentException().send(ixApi, file, expression, expression.left.identifier.source)
+                    BadAssignmentException().send(
+                        ixApi, file, expression, expression.left.identifier.source,
+                        expression.left.realType.name, expression.right.realType.name
+                    )
                 }
             }
 
@@ -404,7 +407,9 @@ class TypeCheckVisitor(private val ixApi: IxApi, private val rootContext: Contex
         }
 
         if (t1.get() === BuiltInType.ANY || t2.get() === BuiltInType.ANY) {
-            CannotApplyOperatorException().send(ixApi, file, expression, expression.operator.source)
+            CannotApplyOperatorException().send(
+                ixApi, file, expression, expression.operator.source, t1.get().name, t2.get().name
+            )
             return Optional.empty()
         }
 
@@ -415,7 +420,9 @@ class TypeCheckVisitor(private val ixApi: IxApi, private val rootContext: Contex
                 if (t1.get() is BuiltInType && t2.get() is BuiltInType) {
                     totalType = widen(t1.get() as BuiltInType, t2.get() as BuiltInType)
                 } else {
-                    CannotApplyOperatorException().send(ixApi, file, expression, expression.operator.source)
+                    CannotApplyOperatorException().send(
+                        ixApi, file, expression, expression.operator.source, t1.get().name, t2.get().name
+                    )
                 }
             }
 
@@ -429,9 +436,13 @@ class TypeCheckVisitor(private val ixApi: IxApi, private val rootContext: Contex
                         val bt1 = t1.get() as BuiltInType
                         val bt2 = t2.get() as BuiltInType
                         if (bt1 == BuiltInType.STRING || bt2 == BuiltInType.STRING) {
-                            CannotApplyOperatorException().send(ixApi, file, expression, expression.operator.source)
+                            CannotApplyOperatorException().send(
+                                ixApi, file, expression, expression.operator.source, t1.get().name, t2.get().name
+                            )
                         } else if (bt1 == BuiltInType.BOOLEAN || bt2 == BuiltInType.BOOLEAN) {
-                            CannotApplyOperatorException().send(ixApi, file, expression, expression.operator.source)
+                            CannotApplyOperatorException().send(
+                                ixApi, file, expression, expression.operator.source, t1.get().name, t2.get().name
+                            )
                         }
                     }
                     totalType = BuiltInType.BOOLEAN
@@ -441,7 +452,9 @@ class TypeCheckVisitor(private val ixApi: IxApi, private val rootContext: Contex
             TokenType.AND, TokenType.OR, TokenType.XOR -> {
                 if (t1.get() is BuiltInType && t2.get() is BuiltInType) {
                     if (t1.get() != BuiltInType.BOOLEAN || t2.get() != BuiltInType.BOOLEAN) {
-                        CannotApplyOperatorException().send(ixApi, file, expression, expression.operator.source)
+                        CannotApplyOperatorException().send(
+                            ixApi, file, expression, expression.operator.source, t1.get().name, t2.get().name
+                        )
                     }
                     totalType = BuiltInType.BOOLEAN
                 }
@@ -692,7 +705,9 @@ class TypeCheckVisitor(private val ixApi: IxApi, private val rootContext: Contex
 
             if (!ControlFlow.exits(statement.body)) {
                 if (SemanticTypes.of(funcType.returnType) != com.kingmang.ixion.types.PrimitiveType.UNIT) {
-                    ReturnTypeMismatchException().send(ixApi, file, statement, funcType.name)
+                    ReturnTypeMismatchException().send(
+                        ixApi, file, statement, funcType.name, funcType.returnType.name, UnitType.name
+                    )
                 }
                 val returnStmt = ReturnStatement(
                     Position(0, 0),
@@ -969,7 +984,9 @@ class TypeCheckVisitor(private val ixApi: IxApi, private val rootContext: Contex
             ixApi,
             file,
             statement,
-            function.name
+            function.name,
+            function.returnType.name,
+            actual.name
         )
         function.hasReturn2 = true
         return Optional.empty()
